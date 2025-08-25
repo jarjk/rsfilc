@@ -7,7 +7,8 @@ use log::*;
 use yansi::Paint;
 
 pub fn handle(day: Option<NaiveDate>, user: &User, current: bool, json: bool) -> Res<()> {
-    let day = day.unwrap_or(default_day(user));
+    debug!("requested day: {day:?}");
+    let day = day.unwrap_or_else(|| default_day(user));
     debug!("showing day: {day}");
     let lessons_of_week = user.get_timetable(day, true)?;
     let lessons = user.get_timetable(day, false)?;
@@ -238,6 +239,7 @@ fn nth_lesson_when(n: u8, ref_lessons: &[Lesson]) -> (Option<LDateTime>, Option<
 }
 
 pub fn default_day(user: &User) -> NaiveDate {
+    warn!("searching for a suitable day to show the timetable for");
     let now = Local::now();
     let today = now.date_naive();
     let end_of_today = if let Ok(mut lessons) = user.get_timetable(today, false) {
