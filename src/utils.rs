@@ -8,10 +8,10 @@ pub fn fix_from(cache_t: Option<ekreta::LDateTime>, mut irval: OptIrval) -> OptI
         && irval
             .0
             .is_none_or(|from| from < ct && irval.1.is_none_or(|to| to > ct))
-        {
-            info!("from cached, replacing {:?} to {ct:?}", irval.0);
-            irval.0 = Some(ct);
-        }
+    {
+        info!("from cached, replacing {:?} to {ct:?}", irval.0);
+        irval.0 = Some(ct);
+    }
     irval
 }
 /// convert type name of `T` to a kind name, used for cache
