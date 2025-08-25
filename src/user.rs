@@ -218,11 +218,10 @@ impl User {
         Ok(token)
     }
     pub fn get_userinfo(&self) -> Res<ekreta::UserInfo> {
-        if let Some((_, cached_info)) = self.load_cache::<ekreta::UserInfo>() {
-            if cached_info.next_downtime() + TimeDelta::hours(4) > Local::now() {
+        if let Some((_, cached_info)) = self.load_cache::<ekreta::UserInfo>()
+            && cached_info.next_downtime() + TimeDelta::hours(4) > Local::now() {
                 return Ok(cached_info);
             }
-        }
         let fetched_info = self.account.fetch_info(&self.headers()?)?;
         self.store_cache(&fetched_info)?;
         Ok(fetched_info)

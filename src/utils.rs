@@ -4,15 +4,14 @@ use log::{debug, info};
 /// use `cache_t` as `interval.0` (from) if some
 pub fn fix_from(cache_t: Option<ekreta::LDateTime>, mut irval: OptIrval) -> OptIrval {
     debug!("got interval: {irval:?}");
-    if let Some(ct) = cache_t.map(|ct| ct.date_naive()) {
-        if irval
+    if let Some(ct) = cache_t.map(|ct| ct.date_naive())
+        && irval
             .0
             .is_none_or(|from| from < ct && irval.1.is_none_or(|to| to > ct))
         {
             info!("from cached, replacing {:?} to {ct:?}", irval.0);
             irval.0 = Some(ct);
         }
-    }
     irval
 }
 /// convert type name of `T` to a kind name, used for cache
