@@ -253,13 +253,13 @@ pub fn default_day(user: &User) -> NaiveDate {
     let mut skip_days = TimeDelta::days(0);
     if end_of_today.is_none_or(|eot| eot < now) {
         skip_days = TimeDelta::days(1); // skipping today, as it's already done
-        while let Ok(lsns) = user.get_timetable(today + skip_days, false)
+        while let Ok(lsns) = user.get_timetable(today + skip_days, true)
             && !lsns.is_empty()
         {
-            if next_lesson(&lsns).is_some() {
-                break;
+            if let Some(nxt_lsn) = next_lesson(&lsns) {
+                return nxt_lsn.kezdet_idopont.date_naive();
             }
-            skip_days += TimeDelta::days(1);
+            skip_days += TimeDelta::days(7);
         }
     }
     today + skip_days
