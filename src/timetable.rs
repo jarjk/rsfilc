@@ -246,7 +246,7 @@ pub fn default_day(user: &User) -> NaiveDate {
     if user.get_timetable(today, false).is_ok_and(|lsns| {
         lsns.iter()
             .filter(|l| !ignore_lesson(l))
-            .last()
+            .next_back()
             .is_none_or(|l| l.veg_idopont < now) // today's school has already ended
     }) {
         let mut skip_days = TimeDelta::days(1); // starting from tomorrow
