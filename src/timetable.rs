@@ -191,16 +191,18 @@ impl User {
         let mut data = vec![];
         let starts_with_0 = lessons[0].idx() == 0;
         for (n, lsn) in lessons.iter().enumerate() {
-            let n = n as u8 + 1 - u8::from(starts_with_0);
+            // expectance is higher if not first lesson
+            let exp_n = n as u8 + 1 + u8::from(n != 0) - u8::from(starts_with_0);
             // calculate `n`. this lesson is
             let nth = lsn.idx();
-            debug!("nth lesson, expected: {n}; actual: {nth}");
+            debug!("nth lesson, expected: {exp_n}; actual: {nth}");
             // same `nth` as previous lesson
-            let same_n_prev = |prev: &Lesson| prev.idx() == (n - 1);
-            let prev_idx = n.overflowing_sub(1 + u8::from(!starts_with_0)).0;
-            if n != nth && lessons.get(prev_idx as usize).is_none_or(same_n_prev) {
-                let (from, to) = nth_lesson_when(n, lessons_of_week);
-                let empty = get_empty(Some(n), from, to);
+            let same_n_prev = |prev: &Lesson| prev.idx() + 1 != nth;
+            let prev_idx = n.overflowing_sub(1).0;
+
+            if (n == 0 && nth != 1) || lessons.get(prev_idx).is_some_and(same_n_prev) {
+                let (from, to) = nth_lesson_when(exp_n, lessons_of_week);
+                let empty = get_empty(Some(exp_n), from, to);
                 let mut empty_disp = disp(&empty, lessons_of_week, None);
                 for item in &mut empty_disp {
                     *item = item.dim().to_string();
