@@ -201,8 +201,7 @@ impl User {
             let prev_ix = ix.overflowing_sub(1).0;
 
             if (ix == 0 && cnt_ix != 1) || lessons.get(prev_ix).is_some_and(wrong_n) {
-                let (from, to) = nth_lesson_when(exp_n, lessons_of_week);
-                let empty = get_empty(Some(exp_n), from, to);
+                let empty = get_empty(exp_n, lessons_of_week);
                 let mut empty_disp = disp(&empty, lessons_of_week, None);
                 for item in &mut empty_disp {
                     *item = item.dim().to_string();
@@ -222,13 +221,14 @@ impl User {
 const EMPTY_NAME: &str = "lukas";
 
 /// create a good-looking empty lesson, using the given properties
-fn get_empty(n: Option<u8>, start: Option<LDateTime>, end: Option<LDateTime>) -> Lesson {
+fn get_empty(n: u8, ref_lessons: &[Lesson]) -> Lesson {
+    let irval = nth_lesson_when(n, ref_lessons);
     Lesson {
         nev: EMPTY_NAME.to_string(),
         tema: Some(String::from("lazíts!")),
-        oraszam: n,
-        kezdet_idopont: start.unwrap_or_default(),
-        veg_idopont: end.unwrap_or_default(),
+        oraszam: Some(n),
+        kezdet_idopont: irval.0.unwrap_or_default(),
+        veg_idopont: irval.1.unwrap_or_default(),
         ..Default::default()
     }
 }
