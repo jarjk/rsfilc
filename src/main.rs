@@ -55,6 +55,7 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
         .unwrap_or(&Command::Timetable {
             day: None,
             current: false,
+            week: false,
         })
         .clone();
     // have a valid user
@@ -79,7 +80,12 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
             warn!("TUI is not yet written");
             Err("TUI is to be written (soon)".into())
         }
-        Command::Timetable { day, current } => timetable::handle(day, &user, current, args.machine),
+        Command::Timetable { day, current, week } => {
+            info!("requested {}: {day:?}", if week { "week" } else { "day" });
+            let day = day.unwrap_or_else(|| timetable::default_day(&user));
+            info!("showing {}: {day}", if week { "week" } else { "day" });
+            timetable::handle(day, &user, current, week, args.machine)
+        }
 
         Command::Evals {
             subject: subj,

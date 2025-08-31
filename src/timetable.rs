@@ -1,24 +1,18 @@
 //! lessons the student has
 
-use crate::{time::MyDate, user::User};
+use crate::{time::MyDate, user::User, utils};
 use chrono::{Datelike, Local, NaiveDate, TimeDelta};
 use ekreta::{AnnouncedTest, LDateTime, Lesson, Res};
 use log::*;
 use yansi::Paint;
 
-pub fn handle(day: Option<NaiveDate>, user: &User, current: bool, json: bool) -> Res<()> {
-    debug!("requested day: {day:?}");
-    let day = day.unwrap_or_else(|| default_day(user));
-    debug!("showing day: {day}");
+pub fn handle(day: NaiveDate, user: &User, current: bool, week: bool, json: bool) -> Res<()> {
     let lessons_of_week = user.get_timetable(day, true)?;
-    let lessons = user.get_timetable(day, false)?;
-    if lessons.is_empty() {
-        if json {
-            println!("null");
-        } else {
-            println!("{day} ({}) nincs rögzített órád, juhé!", day.weekday());
-        }
-        return Ok(());
+    let lessons = user.get_timetable(day, false)?; // PERF: reuses cache from previous line's network fetch
+    if week && lessons_of_week.is_empty() && !json {
+        println!("ezen a héten nincs rögzített órád, juhé!");
+    } else if !week && lessons.is_empty() && !json {
+        println!("{day} ({}) nincs rögzített órád, juhé!", day.weekday());
     }
     if current {
         if let Some(nxt) = next_lesson(&lessons_of_week) {
@@ -40,11 +34,15 @@ pub fn handle(day: Option<NaiveDate>, user: &User, current: bool, json: bool) ->
         return Ok(());
     }
     if json {
-        let json = serde_json::to_string(&lessons)?;
+        let print_lsns = if week { lessons_of_week } else { lessons };
+        let json = serde_json::to_string(&print_lsns)?;
         println!("{json}");
+    } else if week {
+        user.print_week(lessons_of_week);
     } else {
         user.print_day(lessons, &lessons_of_week);
     }
+
     Ok(())
 }
 
@@ -168,7 +166,7 @@ impl User {
             return;
         };
         let day_start = first_lesson.kezdet_idopont;
-        let day = first_lesson.datum.date_naive();
+        let day = first_lesson.date_naive();
         let header = if first_lesson.kamu_smafu() {
             lessons.remove(0).nev.clone()
         } else {
@@ -180,13 +178,6 @@ impl User {
         } // in the unfortunate case of stupidity
 
         let tests = self.get_tests((Some(day), Some(day))).unwrap_or_default();
-
-        let mut table = ascii_table::AsciiTable::default();
-        #[rustfmt::skip]
-        let headers = [".", "ekkor", "tantárgy", "terem", "tanár", "extra", "extra-extra"];
-        for (i, head) in headers.into_iter().enumerate() {
-            table.column(i).set_header(head);
-        }
 
         let mut data = vec![];
         let first_n = u8::from(lessons[0].idx() == 1); // school starts with 1 or 0
@@ -209,7 +200,59 @@ impl User {
             let row = disp(lsn, lessons_of_week, ancd_test);
             data.push(row);
         }
-        table.print(data);
+        #[rustfmt::skip]
+        utils::print_table_wh([".", "ekkor", "tantárgy", "terem", "tanár", "extra", "extra-extra"], data);
+    }
+
+    /// print week timetable
+    fn print_week(&self, mut lsns_week: Vec<Lesson>) {
+        lsns_week.retain(|l| !l.kamu_smafu()); // delete fake lessons
+
+        if lsns_week.is_empty() {
+            return;
+        }
+
+        let min_h_ix = lsns_week.iter().map(|l| l.idx()).min().unwrap(); // SAFETY: wouldn't get here if empty
+        let max_h_ix = lsns_week.iter().map(|l| l.idx()).max().unwrap();
+        let got0 = min_h_ix == 0; // got a lesson during the week before the first lesson
+
+        let h_max = usize::from(max_h_ix - min_h_ix + 1); // hour max: last end of a day
+        let mut data = vec![vec![String::new(); 2]; h_max]; // (index-column + monday =) 2 * h_max timetable
+        for ix in min_h_ix..=max_h_ix {
+            data[usize::from(ix - u8::from(!got0))][0] = ix.to_string(); // index-column
+        }
+
+        let mut prev_d = lsns_week[0].date_naive(); // previous day
+        let mut d_ix = 1; // day index
+        for lsn in lsns_week {
+            if lsn.date_naive() != prev_d {
+                if (lsn.date_naive() - prev_d).num_days() > 2 {
+                    continue; // we've got lessons for 2 mondays, last one is ignored
+                }
+                prev_d = lsn.date_naive();
+                d_ix += 1; // next day
+            }
+
+            let h_ix = usize::from(lsn.idx() - u8::from(!got0)); // hour index
+            while data[h_ix].get(d_ix).is_none() {
+                data[h_ix].push(String::new()); // new column for this day
+            }
+            data[h_ix][d_ix] = if lsn.happening() {
+                lsn.nev.cyan().to_string()
+            } else if lsn.cancelled() {
+                lsn.nev.red().to_string()
+            } else if lsn.absent() {
+                lsn.nev.on_red().to_string()
+            } else if lsn.helyettes_tanar_neve.is_some() {
+                lsn.nev.on_yellow().to_string()
+            } else if lsn.bejelentett_szamonkeres_uid.is_some() {
+                lsn.nev.on_blue().to_string()
+            } else {
+                lsn.nev
+            };
+        }
+        #[rustfmt::skip]
+        utils::print_table_wh([".", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"], data);
     }
 }
 

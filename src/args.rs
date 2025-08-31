@@ -52,6 +52,10 @@ pub enum Command {
         /// show current lesson if any
         #[arg(short, long, default_value_t = false)]
         current: bool,
+
+        /// week overview
+        #[arg(short, long, default_value_t = false, conflicts_with = "current")]
+        week: bool,
     },
 
     /// evaluations/grades the user received
