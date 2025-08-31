@@ -10,9 +10,9 @@ use std::collections::BTreeSet;
 
 pub fn handle(
     userid: Option<String>,
-    create: bool,
+    login: bool,
     conf: &mut Config,
-    delete: bool,
+    logout: bool,
     switch: bool,
     cache_dir: bool,
     args: &crate::Args,
@@ -26,24 +26,26 @@ pub fn handle(
         }
         return information::handle(&conf.default_userid, conf.users.iter(), args);
     };
-    if create {
-        let res = User::create(name.clone(), conf).inspect_err(|_| {
-            eprintln!("couldn't create user, check your credentials and connection with Kréta");
+    if login {
+        let res = User::login(name.clone(), conf).inspect_err(|_| {
+            eprintln!(
+                "couldn't log in to user account, check your credentials and connection with Kréta"
+            );
         });
         // delete cache dir if couldn't log in
         if res.is_err() {
             crate::cache::delete_dir(&name)?;
         }
         res?;
-        println!("created");
+        println!("successful login");
         return conf.save();
     }
     let userid = conf
         .get_userid(name)
         .ok_or("the given userid/name isn't saved")?;
-    if delete {
-        conf.delete(userid);
-        println!("deleted");
+    if logout {
+        conf.logout(userid);
+        println!("logged out");
     } else if switch {
         conf.switch_user_to(&userid);
         println!("switched");
@@ -110,10 +112,10 @@ impl User {
         }
     }
 
-    /// create a [`User`] from cli and write it to `conf`!
+    /// log in to a [`User`] account from cli and write it to `conf`!
     /// # Errors
     /// getting school-list, selecting school
-    pub fn create(userid: String, conf: &mut Config) -> Res<Self> {
+    pub fn login(userid: String, conf: &mut Config) -> Res<Self> {
         info!("creating user ({userid}) from cli");
 
         let schools = schools::get()?;

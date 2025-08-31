@@ -83,7 +83,7 @@ if not available for your platform ([file an issue](https://codeberg.org/jark/rs
 ## Usage
 
 general help: `rsfilc --help`  
-creating a new user: `rsfilc user --create <USER_ID>`
+log in to an account: `rsfilc user --login <USER_ID>`
 
 ### useful stuff
 

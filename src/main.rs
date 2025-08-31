@@ -63,7 +63,7 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
             User::load(conf, who).ok_or(format!("invalid user ({who}) specified"))?
         } else {
             User::load(conf, &conf.default_userid)
-                .ok_or("no user found, please create one with `rsfilc user --create`")?
+                .ok_or("no user found, please log in to an account with `rsfilc user --login`")?
         }
     } else {
         User::default()
@@ -101,12 +101,12 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
         Command::Tests { subject, past } => announced::handle(past, &user, subject, &args),
 
         Command::User {
-            delete,
-            create,
+            logout,
+            login,
             switch,
             cache_dir,
             userid,
-        } => user::handle(userid, create, conf, delete, switch, cache_dir, &args),
+        } => user::handle(userid, login, conf, logout, switch, cache_dir, &args),
 
         Command::Schools { search } => schools::handle(search, &args),
 
