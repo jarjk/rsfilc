@@ -240,24 +240,22 @@ impl User {
     pub fn get_timetable(&self, day: NaiveDate, whole_week: bool) -> Res<Vec<Lesson>> {
         let num_days_from_mon = day.weekday().number_from_monday() - 1;
         let days_from_mon = TimeDelta::days(num_days_from_mon.into());
-        let days_till_sun = TimeDelta::days((7 - num_days_from_mon - 1).into());
+        let days_till_mon = TimeDelta::days((7 - num_days_from_mon).into());
         let from = if whole_week { day - days_from_mon } else { day };
-        let to = if whole_week { day + days_till_sun } else { day };
+        let to = if whole_week { day + days_till_mon } else { day };
         debug!("fetching tt, whole week: {whole_week}, from {from} to {to}");
 
         let (cache_t, cached_tt) = self.load_cache::<Vec<Lesson>>().unzip();
         if let Some(lessons) = cached_tt.as_ref() {
-            let is_cached = |cl: &Lesson| cl.kezdet_idopont.date_naive() == day;
+            let is_cached = |cl: &Lesson| cl.date_naive() == day;
             let fresh_cache = |ct: LDateTime| (ct - Local::now()).abs() < TimeDelta::seconds(8);
             if !whole_week && cache_t.is_some_and(fresh_cache) && lessons.iter().any(is_cached) {
-                debug!("warm lesson cache hit (< 8s), using instead of fetching");
+                warn!("warm lesson cache hit (< 8s), using instead of refetching");
                 return Ok(lessons.iter().filter(|&x| is_cached(x)).cloned().collect());
             }
         }
         let remain_relevant = |lessons: &mut Vec<Lesson>| {
-            if !whole_week {
-                lessons.retain(|lsn| lsn.kezdet_idopont.date_naive() == day);
-            }
+            lessons.retain(|lsn| (from..=to).contains(&lsn.date_naive()));
         };
         match self.fetch_vec((from, to)) {
             Ok(mut fetched_items) => {
@@ -282,7 +280,7 @@ impl User {
                 let mut lessons = cached_tt.ok_or("nothing cached")?;
                 remain_relevant(&mut lessons);
                 // shouldn't have any lesson on weekends by default
-                if lessons.is_empty() && days_till_sun > TimeDelta::days(1) {
+                if lessons.is_empty() && days_till_mon > TimeDelta::days(2) {
                     Err("nothing cached for this period".into())
                 } else {
                     Ok(lessons)
