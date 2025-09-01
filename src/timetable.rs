@@ -189,19 +189,15 @@ impl User {
         }
 
         let mut data = vec![];
-        let first0 = lessons[0].idx() == 0;
+        let first_n = u8::from(lessons[0].idx() == 1); // school starts with 1 or 0
         for (ix, lsn) in lessons.iter().enumerate() {
-            // expectance is higher if not first lesson
-            let exp_n = ix as u8 + 1 + u8::from(ix != 0) - u8::from(first0);
-            // calculate `n`. this lesson is
-            let cnt_ix = lsn.idx();
-            debug!("nth lesson, expected: {exp_n}; actual: {cnt_ix}");
-            // same `nth` as previous lesson
-            let wrong_n = |prev: &Lesson| prev.idx() + 1 != cnt_ix;
-            let prev_ix = ix.overflowing_sub(1).0;
+            let cnt_n = lsn.idx(); // this is the `n`. lesson of the day
+            let prev_ix = ix.wrapping_sub(1); // index of the previous lesson in the vector
 
-            if (ix == 0 && cnt_ix != 1) || lessons.get(prev_ix).is_some_and(wrong_n) {
-                let empty = get_empty(exp_n, lessons_of_week);
+            let wrong_n = |prev: &Lesson| prev.idx() != cnt_n - 1;
+            if (ix == 0 && cnt_n != first_n) || lessons.get(prev_ix).is_some_and(wrong_n) {
+                let prev_n = cnt_n.wrapping_sub(1);
+                let empty = get_empty(prev_n, lessons_of_week);
                 let mut empty_disp = disp(&empty, lessons_of_week, None);
                 for item in &mut empty_disp {
                     *item = item.dim().to_string();
