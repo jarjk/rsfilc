@@ -116,14 +116,14 @@ pub fn disp(lsn: &Lesson, past_lessons: &[Lesson], test: Option<&AnnouncedTest>)
         .as_ref()
         .map(|t| [": ", &t.italic().to_string()].concat())
         .unwrap_or_default();
-    let name = format!("{}{topic}", lsn.nev);
+    let name = format!("{}{topic}", lsn.nev.bold());
     let name = if lsn.cancelled() {
         let past_morpheme = if lsn.forecoming() { "" } else { "t" };
         format!("elmarad{past_morpheme}: {name}").red().to_string()
     } else {
         name
     };
-    let room = normalised_room(lsn);
+    let room = normalised_room(lsn).italic().to_string();
     let teacher = if let Some(sub_teacher) = &lsn.helyettes_tanar_neve {
         format!("helyettes: {}", sub_teacher.underline())
     } else {
@@ -204,7 +204,7 @@ impl User {
             data.push(row);
         }
         #[rustfmt::skip]
-        utils::print_table_wh([".", "ekkor", "tantárgy", "terem", "tanár", "extra", "extra-extra"], data);
+        utils::print_table_wh([".", "EKKOR", "ÓRA", "TEREM", "TANÁR", "EXTRA", "EXTRA-EXTRA"], data);
     }
 
     /// print week timetable
@@ -265,7 +265,6 @@ fn get_empty(n: u8, ref_lessons: &[Lesson]) -> Lesson {
     let irval = nth_lesson_when(n, ref_lessons);
     Lesson {
         nev: EMPTY_NAME.to_string(),
-        tema: Some(String::from("lazíts!")),
         oraszam: Some(n),
         kezdet_idopont: irval.0.unwrap_or_default(),
         veg_idopont: irval.1.unwrap_or_default(),

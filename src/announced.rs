@@ -10,7 +10,7 @@ pub fn handle(past: bool, user: &User, subj: Option<String>, args: &crate::Args)
     if let Some(subject) = subj {
         filter_by_subject(&mut all_announced, &subject);
     }
-    let headers = ["téma", "tantárgy", "dátum", "mód", "tanár"].into_iter();
+    let headers = ["TÉMA", "TANTÁRGY", "DÁTUM", "MÓD", "TANÁR"].into_iter();
     let dix = if args.machine { None } else { Some(display) };
     utils::print_table(&all_announced, headers, args.reverse, args.number, dix)
 }

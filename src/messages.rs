@@ -20,7 +20,7 @@ pub fn handle_note_msgs(user: &User, id: Option<isize>, args: &crate::Args) -> R
     }
 
     let data = notes.iter().enumerate().collect::<Vec<_>>();
-    let headers = ["id", "tárgya", "tőle", "ekkor"].iter();
+    let headers = ["ID", "TÁRGYA", "TŐLE", "EKKOR"].iter();
     #[rustfmt::skip]
     let disp = if args.machine { None } else { Some(preview_nm) };
     utils::print_table(&data, headers, args.reverse, args.number, disp)
@@ -43,7 +43,7 @@ pub fn handle(user: &User, id: Option<isize>, args: &crate::Args) -> Res<()> {
     }
 
     let data = msg_oviews.iter().enumerate().collect::<Vec<_>>();
-    let headers = ["id", "tárgya", "tőle", "ekkor", "csatolmánya"].iter();
+    let headers = ["ID", "TÁRGYA", "TŐLE", "EKKOR", "CSATOLMÁNYA"].iter();
     #[rustfmt::skip]
     let disp = if args.machine { None } else { Some(disp_oviews) };
     utils::print_table(&data, headers, args.reverse, args.number, disp)
