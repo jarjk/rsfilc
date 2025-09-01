@@ -240,9 +240,9 @@ impl User {
     pub fn get_timetable(&self, day: NaiveDate, whole_week: bool) -> Res<Vec<Lesson>> {
         let num_days_from_mon = day.weekday().number_from_monday() - 1;
         let days_from_mon = TimeDelta::days(num_days_from_mon.into());
-        let days_till_mon = TimeDelta::days((7 - num_days_from_mon).into());
+        let days_till_sun = TimeDelta::days((7 - num_days_from_mon - 1).into());
         let from = if whole_week { day - days_from_mon } else { day };
-        let to = if whole_week { day + days_till_mon } else { day };
+        let to = if whole_week { day + days_till_sun } else { day };
         debug!("fetching tt, whole week: {whole_week}, from {from} to {to}");
 
         let (cache_t, cached_tt) = self.load_cache::<Vec<Lesson>>().unzip();
@@ -280,7 +280,7 @@ impl User {
                 let mut lessons = cached_tt.ok_or("nothing cached")?;
                 remain_relevant(&mut lessons);
                 // shouldn't have any lesson on weekends by default
-                if lessons.is_empty() && days_till_mon > TimeDelta::days(2) {
+                if lessons.is_empty() && days_till_sun > TimeDelta::days(1) {
                     Err("nothing cached for this period".into())
                 } else {
                     Ok(lessons)

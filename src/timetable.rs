@@ -226,9 +226,6 @@ impl User {
         let mut d_ix = 1; // day index
         for lsn in lsns_week {
             if lsn.date_naive() != prev_d {
-                if (lsn.date_naive() - prev_d).num_days() > 2 {
-                    continue; // we've got lessons for 2 mondays, last one is ignored
-                }
                 prev_d = lsn.date_naive();
                 d_ix += 1; // next day
             }
