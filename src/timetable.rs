@@ -100,6 +100,15 @@ fn ignore_lesson(lsn: &Lesson) -> bool {
     lsn.kamu_smafu() || lsn.cancelled() || lsn.nev == EMPTY_NAME
 }
 
+fn normalised_room(lsn: &Lesson) -> String {
+    lsn.terem_neve
+        .clone()
+        .unwrap_or_default()
+        .replace("terem", "")
+        .trim()
+        .to_string()
+}
+
 /// you may want to check `lsn` validity: `lsn.kamu_smafu()`
 pub fn disp(lsn: &Lesson, past_lessons: &[Lesson], test: Option<&AnnouncedTest>) -> Vec<String> {
     let topic = lsn
@@ -114,13 +123,7 @@ pub fn disp(lsn: &Lesson, past_lessons: &[Lesson], test: Option<&AnnouncedTest>)
     } else {
         name
     };
-    let room = lsn
-        .clone()
-        .terem_neve
-        .unwrap_or_default()
-        .replace("terem", "")
-        .trim()
-        .to_string();
+    let room = normalised_room(lsn);
     let teacher = if let Some(sub_teacher) = &lsn.helyettes_tanar_neve {
         format!("helyettes: {}", sub_teacher.underline())
     } else {
@@ -234,22 +237,23 @@ impl User {
             while data[h_ix].get(d_ix).is_none() {
                 data[h_ix].push(String::new()); // new column for this day
             }
-            data[h_ix][d_ix] = if lsn.happening() {
-                lsn.nev.cyan().to_string()
+            let subj = if lsn.happening() {
+                lsn.nev.cyan()
             } else if lsn.cancelled() {
-                lsn.nev.red().to_string()
+                lsn.nev.red()
             } else if lsn.absent() {
-                lsn.nev.on_red().to_string()
+                lsn.nev.on_red()
             } else if lsn.helyettes_tanar_neve.is_some() {
-                lsn.nev.on_yellow().to_string()
+                lsn.nev.on_yellow()
             } else if lsn.bejelentett_szamonkeres_uid.is_some() {
-                lsn.nev.on_blue().to_string()
+                lsn.nev.on_blue()
             } else {
-                lsn.nev
+                lsn.nev.resetting()
             };
+            data[h_ix][d_ix] = format!("{} {}", subj.bold(), normalised_room(&lsn).italic().dim());
         }
         #[rustfmt::skip]
-        utils::print_table_wh([".", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"], data);
+        utils::print_table_wh([".", "HÉTFŐ", "KEDD", "SZERDA", "CSÜTÖRTÖK", "PÉNTEK", "SZOMBAT"], data);
     }
 }
 
