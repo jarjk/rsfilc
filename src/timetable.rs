@@ -227,6 +227,8 @@ impl User {
 
         let mut prev_d = lsns_week[0].date_naive(); // previous day
         let mut d_ix = 1; // day index
+        let nxt_lsn = next_lesson(&lsns_week).cloned();
+
         for lsn in lsns_week {
             if lsn.date_naive() != prev_d {
                 prev_d = lsn.date_naive();
@@ -239,6 +241,11 @@ impl User {
             }
             let subj = if lsn.happening() {
                 lsn.nev.cyan()
+            } else if nxt_lsn
+                .as_ref()
+                .is_some_and(|nl| nl == &lsn && lsn.mins_till_start() < 24 * 60)
+            {
+                lsn.nev.yellow()
             } else if lsn.cancelled() {
                 lsn.nev.red()
             } else if lsn.absent() {
