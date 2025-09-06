@@ -27,7 +27,7 @@ pub fn handle_note_msgs(user: &User, id: Option<isize>, args: &crate::Args) -> R
 }
 
 pub fn handle(user: &User, id: Option<isize>, args: &crate::Args) -> Res<()> {
-    let msg_oviews = user.fetch_msg_oviews()?;
+    let msg_oviews = user.get_msg_oviews()?;
     if let Some(ix) = id_to_ix(id, msg_oviews.len()) {
         let msg_oview = msg_oviews
             .get(ix)

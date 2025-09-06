@@ -354,8 +354,11 @@ impl User {
             .inspect_err(|e| error!("couldn't fetch from E-Kréta server: {e:?}"))
     }
 
-    pub fn fetch_msg_oviews(&self) -> Res<Vec<MsgOview>> {
-        match self.account.fetch_msg_oviews(&self.headers()?) {
+    pub fn get_msg_oviews(&self) -> Res<Vec<MsgOview>> {
+        fn inner(usr: &User) -> Res<Vec<MsgOview>> {
+            usr.account.fetch_msg_oviews(&usr.headers()?)
+        } // used as a catcher of the `?` in the `usr.headers()?`, not to return too early on a `NO_NET=1`
+        match inner(self) {
             Ok(mut msg_oviews) => {
                 msg_oviews.sort_unstable_by_key(|a| a.uzenet_kuldes_datum);
                 if !msg_oviews.is_empty() {
