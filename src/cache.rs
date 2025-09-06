@@ -35,12 +35,12 @@ pub fn load(userid: &str, kind: &str) -> Option<(DateTime<Local>, String)> {
 }
 /// delete all cache and logs as well
 pub fn delete_dir(userid: &str) -> Res<()> {
-    if let Some(cd) = crate::paths::cache_dir(userid) {
-        if cd.exists() {
-            log::warn!("deleting cache dir");
-            fs::remove_dir_all(cd)?;
-            log::info!("done");
-        }
+    if let Some(cd) = crate::paths::cache_dir(userid)
+        && cd.exists()
+    {
+        log::warn!("deleting cache dir");
+        fs::remove_dir_all(cd)?;
+        log::info!("done");
     }
     Ok(())
 }

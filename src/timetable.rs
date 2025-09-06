@@ -7,7 +7,8 @@ use log::*;
 use yansi::Paint;
 
 pub fn handle(day: Option<NaiveDate>, user: &User, current: bool, json: bool) -> Res<()> {
-    let day = day.unwrap_or(default_day(user));
+    debug!("requested day: {day:?}");
+    let day = day.unwrap_or_else(|| default_day(user));
     debug!("showing day: {day}");
     let lessons_of_week = user.get_timetable(day, true)?;
     let lessons = user.get_timetable(day, false)?;
@@ -188,18 +189,15 @@ impl User {
         }
 
         let mut data = vec![];
-        let starts_with_0 = lessons[0].idx() == 0;
-        for (n, lsn) in lessons.iter().enumerate() {
-            let n = n as u8 + 1 - u8::from(starts_with_0);
-            // calculate `n`. this lesson is
-            let nth = lsn.idx();
-            debug!("nth lesson, expected: {n}; actual: {nth}");
-            // same `nth` as previous lesson
-            let same_n_prev = |prev: &Lesson| prev.idx() == (n - 1);
-            let prev_idx = n.overflowing_sub(1 + u8::from(!starts_with_0)).0;
-            if n != nth && lessons.get(prev_idx as usize).is_none_or(same_n_prev) {
-                let (from, to) = nth_lesson_when(n, lessons_of_week);
-                let empty = get_empty(Some(n), from, to);
+        let first_n = u8::from(lessons[0].idx() == 1); // school starts with 1 or 0
+        for (ix, lsn) in lessons.iter().enumerate() {
+            let cnt_n = lsn.idx(); // this is the `n`. lesson of the day
+            let prev_ix = ix.wrapping_sub(1); // index of the previous lesson in the vector
+
+            let wrong_n = |prev: &Lesson| prev.idx() != cnt_n - 1;
+            if (ix == 0 && cnt_n != first_n) || lessons.get(prev_ix).is_some_and(wrong_n) {
+                let prev_n = cnt_n.wrapping_sub(1);
+                let empty = get_empty(prev_n, lessons_of_week);
                 let mut empty_disp = disp(&empty, lessons_of_week, None);
                 for item in &mut empty_disp {
                     *item = item.dim().to_string();
@@ -219,13 +217,14 @@ impl User {
 const EMPTY_NAME: &str = "lukas";
 
 /// create a good-looking empty lesson, using the given properties
-fn get_empty(n: Option<u8>, start: Option<LDateTime>, end: Option<LDateTime>) -> Lesson {
+fn get_empty(n: u8, ref_lessons: &[Lesson]) -> Lesson {
+    let irval = nth_lesson_when(n, ref_lessons);
     Lesson {
         nev: EMPTY_NAME.to_string(),
         tema: Some(String::from("lazíts!")),
-        oraszam: n,
-        kezdet_idopont: start.unwrap_or_default(),
-        veg_idopont: end.unwrap_or_default(),
+        oraszam: Some(n),
+        kezdet_idopont: irval.0.unwrap_or_default(),
+        veg_idopont: irval.1.unwrap_or_default(),
         ..Default::default()
     }
 }
@@ -238,24 +237,22 @@ fn nth_lesson_when(n: u8, ref_lessons: &[Lesson]) -> (Option<LDateTime>, Option<
 }
 
 pub fn default_day(user: &User) -> NaiveDate {
+    warn!("searching for a suitable day to show the timetable for");
     let now = Local::now();
     let today = now.date_naive();
-    let end_of_today = if let Ok(mut lessons) = user.get_timetable(today, false) {
-        lessons.retain(|l| !ignore_lesson(l));
-        lessons.last().map(|l| l.veg_idopont)
-    } else {
-        return today;
-    };
 
-    let mut skip_days = TimeDelta::days(0);
-    if end_of_today.is_none_or(|eot| eot < now) {
-        skip_days = TimeDelta::days(1); // skipping today, as it's already done
-        while let Ok(lsns) = user.get_timetable(today + skip_days, false) {
-            if next_lesson(&lsns).is_some() {
-                break;
-            }
-            skip_days += TimeDelta::days(1);
+    let mut skip_days = TimeDelta::days(0); // starting with today
+    while let Ok(lsns) = user.get_timetable(today + skip_days, true)
+    // summertime sadness, stop
+        && !lsns.is_empty()
+    {
+        if let Some(nxt_lsn) = lsns
+            .iter() // modified version of `next_lesson`, allowing `current_lessons`
+            .find(|lsn| !ignore_lesson(lsn) && (lsn.happening() || lsn.forecoming()))
+        {
+            return nxt_lsn.kezdet_idopont.date_naive(); // day of next lesson
         }
+        skip_days += TimeDelta::days(7); // check out next week
     }
-    today + skip_days
+    today // fallback
 }

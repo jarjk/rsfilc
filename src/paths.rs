@@ -25,7 +25,7 @@ pub fn cache_path(userid: &str, kind: &str) -> Option<PathBuf> {
 /// no `Downloads`
 pub fn download_dir() -> PathBuf {
     let dl_dir = dirs::download_dir()
-        .unwrap_or(dirs::home_dir().expect("no home dir").join("Downloads"))
+        .unwrap_or_else(|| dirs::home_dir().expect("no home dir").join("Downloads"))
         .join(APP_NAME);
     if !dl_dir.exists() {
         fs::create_dir_all(&dl_dir).unwrap();
