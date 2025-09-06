@@ -17,18 +17,18 @@ pub fn handle(day: NaiveDate, user: &User, current: bool, week: bool, json: bool
     if current {
         if let Some(nxt) = next_lesson(&lessons_of_week) {
             if json {
-                let data = serde_json::to_string(&(mins_till(nxt.kezdet_idopont), nxt))?;
+                let data = serde_json::to_string(&(nxt.mins_till_start(), nxt))?;
                 println!("{data}");
             } else {
-                println!("{}m -> {}", mins_till(nxt.kezdet_idopont), nxt.nev);
+                println!("{}m -> {}", nxt.mins_till_start(), nxt.nev);
             }
         }
         for cnt_lsn in current_lessons(&lessons) {
             if json {
-                let data = serde_json::to_string(&(mins_till(cnt_lsn.veg_idopont), cnt_lsn))?;
+                let data = serde_json::to_string(&(cnt_lsn.mins_till_end(), cnt_lsn))?;
                 println!("{data}");
             } else {
-                println!("{}, {}m", cnt_lsn.nev, mins_till(cnt_lsn.veg_idopont));
+                println!("{}, {}m", cnt_lsn.nev, cnt_lsn.mins_till_end());
             }
         }
         return Ok(());
@@ -46,10 +46,6 @@ pub fn handle(day: NaiveDate, user: &User, current: bool, week: bool, json: bool
     Ok(())
 }
 
-/// minutes `till` now
-fn mins_till(till: LDateTime) -> i64 {
-    (till - Local::now()).num_minutes()
-}
 /// Parse the day got as `argument`.
 /// # errors
 /// - day shifter contains invalid number.
@@ -86,7 +82,7 @@ pub fn current_lessons(lessons: &[Lesson]) -> Vec<&Lesson> {
 /// Returns the next [`Lesson`] of this [`User`] from `lessons` which shall include today's [`Lesson`]s.
 /// # Warning
 /// There might accidentally be more next [`Lesson`]s. In this case only one of them is returned.
-/// Also, if there is any `current_lesson`, None is returned
+/// Also, if there is any `current_lesson`, [`None`] is returned
 pub fn next_lesson(lessons: &[Lesson]) -> Option<&Lesson> {
     if !current_lessons(lessons).is_empty() {
         return None;
@@ -98,15 +94,6 @@ pub fn next_lesson(lessons: &[Lesson]) -> Option<&Lesson> {
 /// whether it's fake or cancelled
 fn ignore_lesson(lsn: &Lesson) -> bool {
     lsn.kamu_smafu() || lsn.cancelled() || lsn.nev == EMPTY_NAME
-}
-
-fn normalised_room(lsn: &Lesson) -> String {
-    lsn.terem_neve
-        .clone()
-        .unwrap_or_default()
-        .replace("terem", "")
-        .trim()
-        .to_string()
 }
 
 /// you may want to check `lsn` validity: `lsn.kamu_smafu()`
@@ -123,26 +110,26 @@ pub fn disp(lsn: &Lesson, past_lessons: &[Lesson], test: Option<&AnnouncedTest>)
     } else {
         name
     };
-    let room = normalised_room(lsn).italic().to_string();
+    let room = lsn.normalised_room().italic().to_string();
     let teacher = if let Some(sub_teacher) = &lsn.helyettes_tanar_neve {
         format!("helyettes: {}", sub_teacher.underline())
     } else {
         lsn.tanar_neve.clone().unwrap_or_default()
     };
-    let mins_to_start = mins_till(lsn.kezdet_idopont);
+    let mins_to_start = lsn.mins_till_start();
     let from = if next_lesson(past_lessons).is_some_and(|nxt| nxt == lsn) && mins_to_start < 120 {
         format!("{mins_to_start} perc").yellow().to_string()
     } else {
         lsn.kezdet_idopont.format("%H:%M").to_string()
     };
     let to = if lsn.happening() {
-        let till_end = mins_till(lsn.veg_idopont);
+        let till_end = lsn.mins_till_end();
         format!("{till_end} perc").cyan().to_string()
     } else {
         lsn.veg_idopont.format("%H:%M").to_string()
     };
     let date_time = [from, to].join(" - ");
-    let num = lsn.idx().to_string();
+    let num = lsn.d_num().to_string();
 
     let mut row = vec![num, date_time, name, room, teacher];
     if lsn.absent() {
@@ -183,12 +170,12 @@ impl User {
         let tests = self.get_tests((Some(day), Some(day))).unwrap_or_default();
 
         let mut data = vec![];
-        let first_n = u8::from(lessons[0].idx() == 1); // school starts with 1 or 0
+        let first_n = u8::from(lessons[0].d_num() == 1); // school starts with 1 or 0
         for (ix, lsn) in lessons.iter().enumerate() {
-            let cnt_n = lsn.idx(); // this is the `n`. lesson of the day
+            let cnt_n = lsn.d_num(); // this is the `n`. lesson of the day
             let prev_ix = ix.wrapping_sub(1); // index of the previous lesson in the vector
 
-            let wrong_n = |prev: &Lesson| prev.idx() != cnt_n - 1;
+            let wrong_n = |prev: &Lesson| prev.d_num() != cnt_n - 1;
             if (ix == 0 && cnt_n != first_n) || lessons.get(prev_ix).is_some_and(wrong_n) {
                 let prev_n = cnt_n.wrapping_sub(1);
                 let empty = get_empty(prev_n, lessons_of_week);
@@ -215,8 +202,8 @@ impl User {
             return;
         }
 
-        let min_h_ix = lsns_week.iter().map(|l| l.idx()).min().unwrap(); // SAFETY: wouldn't get here if empty
-        let max_h_ix = lsns_week.iter().map(|l| l.idx()).max().unwrap();
+        let min_h_ix = lsns_week.iter().map(|l| l.d_num()).min().unwrap(); // SAFETY: wouldn't get here if empty
+        let max_h_ix = lsns_week.iter().map(|l| l.d_num()).max().unwrap();
         let got0 = min_h_ix == 0; // got a lesson during the week before the first lesson
 
         let h_max = usize::from(max_h_ix - min_h_ix + 1); // hour max: last end of a day
@@ -235,7 +222,7 @@ impl User {
                 d_ix += 1; // next day
             }
 
-            let h_ix = usize::from(lsn.idx() - u8::from(!got0)); // hour index
+            let h_ix = usize::from(lsn.d_num() - u8::from(!got0)); // hour index
             while data[h_ix].get(d_ix).is_none() {
                 data[h_ix].push(String::new()); // new column for this day
             }
@@ -257,7 +244,7 @@ impl User {
             } else {
                 lsn.nev.resetting()
             };
-            data[h_ix][d_ix] = format!("{} {}", subj.bold(), normalised_room(&lsn).italic().dim());
+            data[h_ix][d_ix] = format!("{} {}", subj.bold(), lsn.normalised_room().italic().dim());
         }
         #[rustfmt::skip]
         utils::print_table_wh([".", "HÉTFŐ", "KEDD", "SZERDA", "CSÜTÖRTÖK", "PÉNTEK", "SZOMBAT"], data);
@@ -300,7 +287,7 @@ pub fn default_day(user: &User) -> NaiveDate {
             .iter() // modified version of `next_lesson`, allowing `current_lessons`
             .find(|lsn| !ignore_lesson(lsn) && (lsn.happening() || lsn.forecoming()))
         {
-            return nxt_lsn.kezdet_idopont.date_naive(); // day of next lesson
+            return nxt_lsn.date_naive(); // day of next lesson
         }
         skip_days += TimeDelta::days(7); // check out next week
     }
