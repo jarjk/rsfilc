@@ -175,7 +175,7 @@ impl User {
             let cnt_n = lsn.d_num(); // this is the `n`. lesson of the day
             let prev_ix = ix.wrapping_sub(1); // index of the previous lesson in the vector
 
-            let wrong_n = |prev: &Lesson| prev.d_num() != cnt_n - 1;
+            let wrong_n = |prev: &Lesson| prev.d_num() != cnt_n - 1 || prev.d_num() == cnt_n;
             if (ix == 0 && cnt_n != first_n) || lessons.get(prev_ix).is_some_and(wrong_n) {
                 let prev_n = cnt_n.wrapping_sub(1);
                 let empty = get_empty(prev_n, lessons_of_week);
