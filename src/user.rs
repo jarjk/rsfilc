@@ -162,7 +162,8 @@ impl User {
     fn load_cache<D: for<'a> Deserialize<'a>>(&self) -> Option<(LDateTime, D)> {
         let kind = utils::type_to_kind_name::<D>().ok()?;
         if std::env::var("NO_CACHE").is_ok_and(|nc| nc == "1") && kind != "token" {
-            log::info!("manually triggered 'no cache' error");
+            log::info!("ignoring cache: manually triggered 'no cache' error");
+            eprintln!("ignoring cache: manually triggered 'no cache' error");
             return None;
         }
 

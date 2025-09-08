@@ -38,9 +38,10 @@ pub fn handle(day: NaiveDate, user: &User, current: bool, week: bool, json: bool
         let json = serde_json::to_string(&print_lsns)?;
         println!("{json}");
     } else if week {
-        user.print_week(lessons_of_week);
+        print_week(lessons_of_week);
     } else {
-        user.print_day(lessons);
+        let tests = user.get_tests((Some(day), Some(day))).unwrap_or_default();
+        print_day(lessons, &tests);
     }
 
     Ok(())
@@ -97,7 +98,7 @@ fn ignore_lesson(lsn: &Lesson) -> bool {
 }
 
 /// you may want to check `lsn` validity: `lsn.kamu_smafu()`
-pub fn disp(lsn: &Lesson, nxt_lsn: &Option<Lesson>, test: Option<&AnnouncedTest>) -> Vec<String> {
+pub fn disp(lsn: &Lesson, nxt_lsn: Option<&Lesson>, test: Option<&AnnouncedTest>) -> Vec<String> {
     let topic = lsn
         .tema
         .as_ref()
@@ -117,7 +118,7 @@ pub fn disp(lsn: &Lesson, nxt_lsn: &Option<Lesson>, test: Option<&AnnouncedTest>
         lsn.tanar_neve.clone().unwrap_or_default()
     };
     let mins_to_start = lsn.mins_till_start();
-    let from = if nxt_lsn.as_ref().is_some_and(|nxt| nxt == lsn) && mins_to_start < 120 {
+    let from = if nxt_lsn.as_ref().is_some_and(|nxt| *nxt == lsn) && mins_to_start < 120 {
         format!("{mins_to_start} perc").yellow().to_string()
     } else {
         lsn.kezdet_idopont.format("%H:%M").to_string()
@@ -148,96 +149,90 @@ pub fn disp(lsn: &Lesson, nxt_lsn: &Option<Lesson>, test: Option<&AnnouncedTest>
     row
 }
 
-impl User {
-    /// print all lessons of a day
-    pub fn print_day(&self, mut lessons: Vec<Lesson>) {
-        let Some(first_lesson) = lessons.first() else {
-            warn!("empty lesson-list got, won't print");
-            return;
-        };
-        let day = first_lesson.date_naive();
-        let header = if first_lesson.kamu_smafu() {
-            lessons.remove(0).nev.clone()
+/// print all lessons of a day
+pub fn print_day(mut lessons: Vec<Lesson>, tests: &[AnnouncedTest]) {
+    let Some(first_lesson) = lessons.first() else {
+        warn!("empty lesson-list got, won't print");
+        return;
+    };
+    let header = if first_lesson.kamu_smafu() {
+        lessons.remove(0).nev.clone()
+    } else {
+        let day_start = first_lesson.kezdet_idopont;
+        format!("{}, {}", day_start.hun_day_of_week(), day_start.pretty())
+    };
+    println!("{header}");
+    if lessons.is_empty() {
+        return;
+    } // in the unfortunate case of stupidity
+
+    let (day_start, mut data) = index_tt(&lessons);
+    let nxt_lsn = next_lesson(&lessons).cloned();
+
+    for lsn in lessons {
+        let h_ix = usize::from(lsn.d_num() - day_start); // hour index
+
+        let same_n = |t: &&AnnouncedTest| t.orarendi_ora_oraszama == lsn.oraszam;
+        let disp = disp(&lsn, nxt_lsn.as_ref(), tests.iter().find(same_n));
+        data[h_ix] = (0..data[h_ix].len().max(disp.len())) // manual impl of `itertools::zip_longest()`
+            .map(|i| (data[h_ix].get(i), disp.get(i)))
+            .map(|(orig, new)| match [orig, new] {
+                [None, None] => unreachable!(),
+                [None, Some(r)] => r.to_owned(), // usual case
+                [Some(l), None] => l.to_owned(), // if `orig` is longer due to extra data
+                [Some(l), Some(r)] if l == r => l.to_owned(), // no need for redundancy here
+                [Some(l), Some(r)] => [l, "/", r].concat(), // this is why, 2 lessons at the same time
+            })
+            .collect::<Vec<_>>();
+    }
+
+    #[rustfmt::skip]
+    utils::print_table_wh([".", "EKKOR", "ÓRA", "TEREM", "TANÁR", "EXTRA", "EXTRA-EXTRA"], data);
+}
+
+/// print week timetable
+fn print_week(mut lsns_week: Vec<Lesson>) {
+    lsns_week.retain(|l| !l.kamu_smafu()); // delete fake lessons
+    if lsns_week.is_empty() {
+        return;
+    }
+
+    let (day_start, mut data) = index_tt(&lsns_week);
+    let mut prev_d = lsns_week[0].date_naive(); // previous day
+    let mut d_ix = 1; // day index
+    let nxt_lsn = next_lesson(&lsns_week).cloned();
+
+    for lsn in lsns_week {
+        if lsn.date_naive() != prev_d {
+            prev_d = lsn.date_naive();
+            d_ix += 1; // next day
+        }
+
+        let h_ix = usize::from(lsn.d_num() - day_start); // hour index
+        while data[h_ix].get(d_ix).is_none() {
+            data[h_ix].push(String::new()); // new column for this day
+        }
+        let is_the_next_lesson = |nl| nl == &lsn && lsn.mins_till_start() < 24 * 60;
+        let subj = if lsn.happening() {
+            lsn.nev.cyan()
+        } else if nxt_lsn.as_ref().is_some_and(is_the_next_lesson) {
+            lsn.nev.yellow()
+        } else if lsn.cancelled() {
+            lsn.nev.red()
+        } else if lsn.absent() {
+            lsn.nev.on_red()
+        } else if lsn.helyettes_tanar_neve.is_some() {
+            lsn.nev.on_yellow()
+        } else if lsn.bejelentett_szamonkeres_uid.is_some() {
+            lsn.nev.on_blue()
         } else {
-            let day_start = first_lesson.kezdet_idopont;
-            format!("{}, {}", day_start.hun_day_of_week(), day_start.pretty())
-        };
-        println!("{header}");
-        if lessons.is_empty() {
-            return;
-        } // in the unfortunate case of stupidity
-
-        let tests = self.get_tests((Some(day), Some(day))).unwrap_or_default();
-        let (day_start, mut data) = index_tt(&lessons);
-        let nxt_lsn = next_lesson(&lessons).cloned();
-
-        for lsn in lessons {
-            let h_ix = usize::from(lsn.d_num() - day_start); // hour index
-
-            let same_n = |t: &&AnnouncedTest| t.orarendi_ora_oraszama == lsn.oraszam;
-            let disp = disp(&lsn, &nxt_lsn, tests.iter().find(same_n));
-            data[h_ix] = (0..data[h_ix].len().max(disp.len())) // manual impl of `itertools::zip_longest()`
-                .map(|i| (data[h_ix].get(i), disp.get(i)))
-                .map(|(orig, new)| match [orig, new] {
-                    [None, None] => unreachable!(),
-                    [None, Some(r)] => r.to_owned(), // usual case
-                    [Some(l), None] => l.to_owned(), // if `orig` is longer due to extra data
-                    [Some(l), Some(r)] if l == r => l.to_owned(), // no need for redundancy here
-                    [Some(l), Some(r)] => [l, "/", r].concat(), // this is why, 2 lessons at the same time
-                })
-                .collect::<Vec<_>>();
+            lsn.nev.resetting()
         }
-
-        #[rustfmt::skip]
-        utils::print_table_wh([".", "EKKOR", "ÓRA", "TEREM", "TANÁR", "EXTRA", "EXTRA-EXTRA"], data);
+        .bold();
+        data[h_ix][d_ix].push_str(&format!("{subj} {}", lsn.normalised_room().italic().dim()));
     }
-
-    /// print week timetable
-    fn print_week(&self, mut lsns_week: Vec<Lesson>) {
-        lsns_week.retain(|l| !l.kamu_smafu()); // delete fake lessons
-        if lsns_week.is_empty() {
-            return;
-        }
-
-        let (day_start, mut data) = index_tt(&lsns_week);
-        let mut prev_d = lsns_week[0].date_naive(); // previous day
-        let mut d_ix = 1; // day index
-        let nxt_lsn = next_lesson(&lsns_week).cloned();
-
-        for lsn in lsns_week {
-            if lsn.date_naive() != prev_d {
-                prev_d = lsn.date_naive();
-                d_ix += 1; // next day
-            }
-
-            let h_ix = usize::from(lsn.d_num() - day_start); // hour index
-            while data[h_ix].get(d_ix).is_none() {
-                data[h_ix].push(String::new()); // new column for this day
-            }
-            let subj = if lsn.happening() {
-                lsn.nev.cyan()
-            } else if nxt_lsn
-                .as_ref()
-                .is_some_and(|nl| nl == &lsn && lsn.mins_till_start() < 24 * 60)
-            {
-                lsn.nev.yellow()
-            } else if lsn.cancelled() {
-                lsn.nev.red()
-            } else if lsn.absent() {
-                lsn.nev.on_red()
-            } else if lsn.helyettes_tanar_neve.is_some() {
-                lsn.nev.on_yellow()
-            } else if lsn.bejelentett_szamonkeres_uid.is_some() {
-                lsn.nev.on_blue()
-            } else {
-                lsn.nev.resetting()
-            }
-            .bold();
-            data[h_ix][d_ix].push_str(&format!("{subj} {}", lsn.normalised_room().italic().dim()));
-        }
-        #[rustfmt::skip]
-        utils::print_table_wh([".", "HÉTFŐ", "KEDD", "SZERDA", "CSÜTÖRTÖK", "PÉNTEK", "SZOMBAT"], data);
-    }
+    #[rustfmt::skip]
+    utils::print_table_wh([".", "HÉTFŐ", "KEDD", "SZERDA", "CSÜTÖRTÖK", "PÉNTEK", "SZOMBAT"], data);
 }
 
 /// # SAFETY
@@ -245,7 +240,7 @@ impl User {
 fn index_tt(lessons: &[Lesson]) -> (u8, Vec<Vec<String>>) {
     let first_h_ix = lessons.first().map(Lesson::d_num).unwrap();
     let max_h_ix = lessons.iter().map(Lesson::d_num).max().unwrap();
-    let day_start = u8::from(first_h_ix != 0); // day shall start on `day_start`th lesson
+    let day_start = u8::from(first_h_ix != 0); // day shall start on `day_start`th lesson, 0 if 0, 1 otherwise
 
     let h_max = usize::from(max_h_ix - day_start + 1); // hour max: last `h_ix` of the day
     let mut data = vec![vec![String::new(); 1]; h_max]; // (index-column + one for sure =) 2 column * `h_max` rows => timetable
