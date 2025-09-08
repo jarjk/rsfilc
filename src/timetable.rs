@@ -175,8 +175,17 @@ impl User {
             let h_ix = usize::from(lsn.d_num() - day_start); // hour index
 
             let same_n = |t: &&AnnouncedTest| t.orarendi_ora_oraszama == lsn.oraszam;
-            let ancd_test = tests.iter().find(same_n);
-            data[h_ix] = disp(&lsn, &nxt_lsn, ancd_test);
+            let disp = disp(&lsn, &nxt_lsn, tests.iter().find(same_n));
+            data[h_ix] = (0..data[h_ix].len().max(disp.len())) // manual impl of `itertools::zip_longest()`
+                .map(|i| (data[h_ix].get(i), disp.get(i)))
+                .map(|(orig, new)| match [orig, new] {
+                    [None, None] => unreachable!(),
+                    [None, Some(r)] => r.to_owned(), // usual case
+                    [Some(l), None] => l.to_owned(), // if `orig` is longer due to extra data
+                    [Some(l), Some(r)] if l == r => l.to_owned(), // no need for redundancy here
+                    [Some(l), Some(r)] => [l, "/", r].concat(), // this is why, 2 lessons at the same time
+                })
+                .collect::<Vec<_>>();
         }
 
         #[rustfmt::skip]
