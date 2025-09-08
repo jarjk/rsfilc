@@ -222,8 +222,9 @@ impl User {
                 lsn.nev.on_blue()
             } else {
                 lsn.nev.resetting()
-            };
-            data[h_ix][d_ix] = format!("{} {}", subj.bold(), lsn.normalised_room().italic().dim());
+            }
+            .bold();
+            data[h_ix][d_ix].push_str(&format!("{subj} {}", lsn.normalised_room().italic().dim()));
         }
         #[rustfmt::skip]
         utils::print_table_wh([".", "HÉTFŐ", "KEDD", "SZERDA", "CSÜTÖRTÖK", "PÉNTEK", "SZOMBAT"], data);
