@@ -156,8 +156,7 @@ fn set_up_logger(verbose: bool) -> Res<()> {
 }
 
 fn guided_renames(conf: &mut Config, user: &User) -> Res<()> {
-    // SAFETY: this runs single-threaded
-    unsafe { env::set_var("NO_CACHE", "1") };
+    unsafe { env::set_var("NO_CACHE", "1") }; // SAFETY: this runs single-threaded
     unsafe { env::set_var("NO_RENAME", "1") };
     let tt = user.get_timetable(chrono::Local::now().date_naive(), true)?;
     let mut to_rename = BTreeSet::new();
