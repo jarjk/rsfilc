@@ -10,9 +10,9 @@ use std::collections::BTreeSet;
 
 pub fn handle(
     userid: Option<String>,
-    create: bool,
+    login: bool,
     conf: &mut Config,
-    delete: bool,
+    logout: bool,
     switch: bool,
     cache_dir: bool,
     args: &crate::Args,
@@ -26,24 +26,26 @@ pub fn handle(
         }
         return information::handle(&conf.default_userid, conf.users.iter(), args);
     };
-    if create {
-        let res = User::create(name.clone(), conf).inspect_err(|_| {
-            eprintln!("couldn't create user, check your credentials and connection with Kréta");
+    if login {
+        let res = User::login(name.clone(), conf).inspect_err(|_| {
+            eprintln!(
+                "couldn't log in to user account, check your credentials and connection with Kréta"
+            );
         });
         // delete cache dir if couldn't log in
         if res.is_err() {
             crate::cache::delete_dir(&name)?;
         }
         res?;
-        println!("created");
+        println!("successful login");
         return conf.save();
     }
     let userid = conf
         .get_userid(name)
         .ok_or("the given userid/name isn't saved")?;
-    if delete {
-        conf.delete(userid);
-        println!("deleted");
+    if logout {
+        conf.logout(userid);
+        println!("logged out");
     } else if switch {
         conf.switch_user_to(&userid);
         println!("switched");
@@ -110,10 +112,10 @@ impl User {
         }
     }
 
-    /// create a [`User`] from cli and write it to `conf`!
+    /// log in to a [`User`] account from cli and write it to `conf`!
     /// # Errors
     /// getting school-list, selecting school
-    pub fn create(userid: String, conf: &mut Config) -> Res<Self> {
+    pub fn login(userid: String, conf: &mut Config) -> Res<Self> {
         info!("creating user ({userid}) from cli");
 
         let schools = schools::get()?;
@@ -160,7 +162,8 @@ impl User {
     fn load_cache<D: for<'a> Deserialize<'a>>(&self) -> Option<(LDateTime, D)> {
         let kind = utils::type_to_kind_name::<D>().ok()?;
         if std::env::var("NO_CACHE").is_ok_and(|nc| nc == "1") && kind != "token" {
-            log::info!("manually triggered 'no cache' error");
+            log::info!("ignoring cache: manually triggered 'no cache' error");
+            eprintln!("ignoring cache: manually triggered 'no cache' error");
             return None;
         }
 
@@ -245,17 +248,15 @@ impl User {
 
         let (cache_t, cached_tt) = self.load_cache::<Vec<Lesson>>().unzip();
         if let Some(lessons) = cached_tt.as_ref() {
-            let is_cached = |cl: &Lesson| cl.kezdet_idopont.date_naive() == day;
+            let is_cached = |cl: &Lesson| cl.date_naive() == day;
             let fresh_cache = |ct: LDateTime| (ct - Local::now()).abs() < TimeDelta::seconds(8);
             if !whole_week && cache_t.is_some_and(fresh_cache) && lessons.iter().any(is_cached) {
-                debug!("warm lesson cache hit (< 8s), using instead of fetching");
+                warn!("warm lesson cache hit (< 8s), using instead of refetching");
                 return Ok(lessons.iter().filter(|&x| is_cached(x)).cloned().collect());
             }
         }
         let remain_relevant = |lessons: &mut Vec<Lesson>| {
-            if !whole_week {
-                lessons.retain(|lsn| lsn.kezdet_idopont.date_naive() == day);
-            }
+            lessons.retain(|lsn| (from..=to).contains(&lsn.date_naive()));
         };
         match self.fetch_vec((from, to)) {
             Ok(mut fetched_items) => {
@@ -354,8 +355,11 @@ impl User {
             .inspect_err(|e| error!("couldn't fetch from E-Kréta server: {e:?}"))
     }
 
-    pub fn fetch_msg_oviews(&self) -> Res<Vec<MsgOview>> {
-        match self.account.fetch_msg_oviews(&self.headers()?) {
+    pub fn get_msg_oviews(&self) -> Res<Vec<MsgOview>> {
+        fn inner(usr: &User) -> Res<Vec<MsgOview>> {
+            usr.account.fetch_msg_oviews(&usr.headers()?)
+        } // used as a catcher of the `?` in the `usr.headers()?`, not to return too early on a `NO_NET=1`
+        match inner(self) {
             Ok(mut msg_oviews) => {
                 msg_oviews.sort_unstable_by_key(|a| a.uzenet_kuldes_datum);
                 if !msg_oviews.is_empty() {

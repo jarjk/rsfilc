@@ -1,5 +1,6 @@
 use ekreta::{OptIrval, Res};
 use log::{debug, info};
+use yansi::Paint;
 
 /// use `cache_t` as `interval.0` (from) if some
 pub fn fix_from(cache_t: Option<ekreta::LDateTime>, mut irval: OptIrval) -> OptIrval {
@@ -43,8 +44,17 @@ macro_rules! gen_get_for {
     };
 }
 
+/// print table with headers
+pub fn print_table_wh<I: IntoIterator<Item: ToString>>(headers: I, data: Vec<Vec<String>>) {
+    let mut tbl = ascii_table::AsciiTable::default();
+    for (i, h) in headers.into_iter().enumerate() {
+        tbl.column(i).set_header(h.to_string().bold().to_string());
+    }
+    tbl.print(data);
+}
+
 /// print `num` `items` using `to_str`, reversed if `rev` otherwise not
-pub fn print_table<T, S1, I, F>(
+pub fn print_table<T, I, F>(
     items: &[T],
     headers: I,
     rev: bool,
@@ -53,8 +63,7 @@ pub fn print_table<T, S1, I, F>(
 ) -> Res<()>
 where
     T: serde::Serialize,
-    S1: ToString,
-    I: Iterator<Item = S1>,
+    I: Iterator<Item: ToString>,
     F: Fn(&T) -> Vec<String>,
 {
     if items.is_empty() {
@@ -66,12 +75,8 @@ where
         Box::new(items.iter())
     };
     if let Some(to_str) = to_str {
-        let mut table = ascii_table::AsciiTable::default();
-        for (i, head) in headers.into_iter().enumerate() {
-            table.column(i).set_header(head.to_string());
-        }
-        let data: Vec<_> = iter.take(num).map(to_str).collect();
-        table.print(data);
+        let data = iter.take(num).map(to_str).collect::<Vec<_>>();
+        print_table_wh(headers, data);
     } else {
         let data = serde_json::to_string(&iter.take(num).collect::<Vec<_>>())?;
         println!("{data}");

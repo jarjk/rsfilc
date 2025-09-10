@@ -21,7 +21,7 @@ impl Config {
     pub fn switch_user_to(&mut self, name: &impl ToString) {
         self.default_userid = name.to_string();
     }
-    pub fn delete(&mut self, name: impl AsRef<str>) {
+    pub fn logout(&mut self, name: impl AsRef<str>) {
         self.users.retain(|usr| usr.userid != name.as_ref());
         if self.default_userid == name.as_ref() {
             let _ = crate::cache::delete_dir(name.as_ref());

@@ -52,6 +52,10 @@ pub enum Command {
         /// show current lesson if any
         #[arg(short, long, default_value_t = false)]
         current: bool,
+
+        /// week overview
+        #[arg(short, long, default_value_t = false, conflicts_with = "current")]
+        week: bool,
     },
 
     /// evaluations/grades the user received
@@ -108,17 +112,18 @@ pub enum Command {
     User {
         /// the id or name of the user used for args
         userid: Option<String>,
-        /// delete an existing account
-        #[arg(short, long, default_value_t = false, requires = "userid")]
-        delete: bool,
-        /// create an existing account
-        #[arg(short, long, default_value_t = false, requires = "userid")]
-        create: bool,
+        /// log out of an account
+        #[arg(long, default_value_t = false, conflicts_with_all = ["login", "switch"], requires = "userid")]
+        logout: bool,
+        /// log in to an existing E-Kréta account
+        #[arg(long, default_value_t = false, requires = "userid")]
+        login: bool,
         /// switch between existing accounts
-        #[arg(short, long, default_value_t = false, requires = "userid")]
+        #[rustfmt::skip]
+        #[arg(short, long, default_value_t = false, conflicts_with = "login", requires = "userid")]
         switch: bool,
         /// print the cache directory for a user
-        #[arg(long, default_value_t = false)]
+        #[arg(long, default_value_t = false, conflicts_with_all = ["logout", "login", "switch"])]
         cache_dir: bool,
     },
 
@@ -138,15 +143,15 @@ impl Command {
     pub fn user_needed(&self) -> bool {
         info!("checking whether user is needed for task");
         if let Command::User {
-            delete,
-            create,
+            logout,
+            login,
             switch,
             cache_dir,
             userid: _,
         } = &self
         {
             // we do need one on: nothing, switching, listing
-            let nothing_specified = !delete && !create && !switch && !cache_dir;
+            let nothing_specified = !logout && !login && !switch && !cache_dir;
             return nothing_specified || *switch;
         }
         !matches!(

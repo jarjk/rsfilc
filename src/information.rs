@@ -22,7 +22,7 @@ where
         .map(|u| Ok((u.get_userinfo()?, &u.userid, def_userid)))
         .collect::<Res<Vec<_>>>()?;
 
-    let headers = ["név", "om azonosító", "oskola", "született"].into_iter();
+    let headers = ["NÉV", "OM AZONOSÍTÓ", "OSKOLA", "SZÜLETETT"].into_iter();
     let to_str = if args.machine { None } else { Some(disp) };
     utils::print_table(&data, headers, args.reverse, args.number, to_str)
 }

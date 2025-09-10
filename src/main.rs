@@ -55,6 +55,7 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
         .unwrap_or(&Command::Timetable {
             day: None,
             current: false,
+            week: false,
         })
         .clone();
     // have a valid user
@@ -63,7 +64,7 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
             User::load(conf, who).ok_or(format!("invalid user ({who}) specified"))?
         } else {
             User::load(conf, &conf.default_userid)
-                .ok_or("no user found, please create one with `rsfilc user --create`")?
+                .ok_or("no user found, please log in to an account with `rsfilc user --login`")?
         }
     } else {
         User::default()
@@ -79,7 +80,12 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
             warn!("TUI is not yet written");
             Err("TUI is to be written (soon)".into())
         }
-        Command::Timetable { day, current } => timetable::handle(day, &user, current, args.machine),
+        Command::Timetable { day, current, week } => {
+            info!("requested {}: {day:?}", if week { "week" } else { "day" });
+            let day = day.unwrap_or_else(|| timetable::default_day(&user));
+            info!("showing {}: {day}", if week { "week" } else { "day" });
+            timetable::handle(day, &user, current, week, args.machine)
+        }
 
         Command::Evals {
             subject: subj,
@@ -101,12 +107,12 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
         Command::Tests { subject, past } => announced::handle(past, &user, subject, &args),
 
         Command::User {
-            delete,
-            create,
+            logout,
+            login,
             switch,
             cache_dir,
             userid,
-        } => user::handle(userid, create, conf, delete, switch, cache_dir, &args),
+        } => user::handle(userid, login, conf, logout, switch, cache_dir, &args),
 
         Command::Schools { search } => schools::handle(search, &args),
 
@@ -150,8 +156,7 @@ fn set_up_logger(verbose: bool) -> Res<()> {
 }
 
 fn guided_renames(conf: &mut Config, user: &User) -> Res<()> {
-    // SAFETY: this runs single-threaded
-    unsafe { env::set_var("NO_CACHE", "1") };
+    unsafe { env::set_var("NO_CACHE", "1") }; // SAFETY: this runs single-threaded
     unsafe { env::set_var("NO_RENAME", "1") };
     let tt = user.get_timetable(chrono::Local::now().date_naive(), true)?;
     let mut to_rename = BTreeSet::new();

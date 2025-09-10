@@ -27,7 +27,7 @@ pub fn handle(
         return Ok(());
     }
     #[rustfmt::skip]
-    let headers = ["téma", "jegy", "tantárgy", "típus", "tanár", "időpont"];
+    let headers = ["TÉMA", "JEGY", "TANTÁRGY", "TÍPUS", "TANÁR", "IDŐPONT"];
     let disp = if args.machine { None } else { Some(display) };
     utils::print_table(&evals, headers.into_iter(), args.reverse, args.number, disp)
 }

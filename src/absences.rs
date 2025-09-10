@@ -19,7 +19,7 @@ pub fn handle(user: &User, subj: Option<String>, count: bool, args: &crate::Args
         return Ok(());
     }
     #[rustfmt::skip]
-    let headers = ["tantárgy", "tanár", "ettől", "eddig", "ennyit", "igazolás tipus"].into_iter();
+    let headers = ["TANTÁRGY", "TANÁR", "ETTŐL", "EDDIG", "ENNYIT", "IGAZOLÁS TÍPUS"].into_iter();
     let disp = if args.machine { None } else { Some(display) };
     utils::print_table(&absences, headers, args.reverse, args.number, disp)
 }

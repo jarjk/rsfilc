@@ -1,4 +1,4 @@
-users = [] # ilyet így csinálj: `rsfilc user --create <OM_ID>`, de elébb mentsd el máshová a rename-t, mert lehet hogy felülírja
+users = [] # ilyet így csinálj: `rsfilc user --login <OM_ID>`, de elébb mentsd el máshová a rename-t, mert lehet hogy felülírja
 default_userid = "" # s ezt majd kitölti neked
 
 rename = [

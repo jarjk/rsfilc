@@ -10,7 +10,7 @@ pub fn handle(search: Option<String>, args: &crate::Args) -> Res<()> {
     }
     info!("listing schools");
     // utils::print_them_basic(schools.iter(), disp);
-    let headers = ["név", "azonosító", "település"].into_iter();
+    let headers = ["NÉV", "AZONOSÍTÓ", "TELEPÜLÉS"].into_iter();
     let disp = if args.machine { None } else { Some(display) };
     utils::print_table(&schools, headers, args.reverse, args.number, disp)
 }

@@ -74,7 +74,7 @@ ha esetleg nem elérhető a platformodra([tudasd ezt velünk](https://codeberg.o
 ## Használat
 
 kedves kis használati utasítás: `rsfilc --help`  
-új felhasználó létrehozása: `rsfilc user --create <OM_AZON>`
+bejelentkezés fiókba: `rsfilc user --login <OM_AZON>`
 
 ### jól vésd eszedbe!
 
