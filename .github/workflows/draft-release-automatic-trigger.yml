@@ -1,6 +1,7 @@
 name: Automatic trigger draft release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -15,18 +16,18 @@ jobs:
     needs: call-workflow-build-artifacts-and-run-tests
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
       - name: Fetch
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: artifacts
 
       - name: list all downloaded artifacts
         run: |
-          ls -AR artifacts/
+          tree artifacts/
           echo THIS WAS artifacts/
 
       - name: Organize Artifacts
@@ -42,7 +43,7 @@ jobs:
             # Move and rename the file(s) inside the subdirectory
             for file in $artifact_dir/*; do
               filename=$(basename $file)
-  
+
               # Check if the file has an extension
               if [[ "$filename" == *.* ]]; then
                 extension="${filename##*.}" # Extract file extension
@@ -60,18 +61,24 @@ jobs:
           done
 
       - name: Create GitHub Release
-        id: create_release
-
         uses: softprops/action-gh-release@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: target/release-binaries/*
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
 
       - name: Publish to crates.io
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATESIO_TOKEN }}
+        shell: bash
         run: |
           ls -la
           git status
-          cargo publish
+          version="v$(grep version Cargo.toml | head -n1 | cut -d '"' -f2)"
+          git_tag="$(basename ${{ github.ref }})"
+          echo "::notice::Cargo.toml version is: '$version', github tag is: '$git_tag'"
+          if [ "$version" == "$git_tag" ]; then
+            cargo publish --token "${{ secrets.CRATESIO_TOKEN }}" --verbose
+          else
+            echo "::warning title=Version mismatch::they don't match, not uploading!"
+          fi
