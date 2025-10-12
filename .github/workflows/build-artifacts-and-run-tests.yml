@@ -13,38 +13,33 @@ env:
 
 jobs:
   build-artifacts-and-run-tests:
-    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.os }}
     env:
       CARGO: cargo
     strategy:
       fail-fast: false
       matrix:
-        target:
-          # native
-          - x86_64-unknown-linux-gnu
-          - x86_64-pc-windows-msvc
-          - aarch64-pc-windows-msvc
-          - aarch64-apple-darwin
-          # cross
-          - aarch64-unknown-linux-gnu
-          # cargo-ndk
-          - aarch64-linux-android
-
         include:
-          # runner overrides
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-          - target: aarch64-pc-windows-msvc
-            os: windows-latest
-          - target: aarch64-apple-darwin
-            os: macos-latest
-          # targets that use cross
-          - target: aarch64-unknown-linux-gnu
-            use-cross: true
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest }
+          - { target: aarch64-unknown-linux-gnu, os: ubuntu-24.04-arm }
+          - {
+              target: x86_64-unknown-linux-musl,
+              os: ubuntu-latest,
+              use-cross: true,
+            }
+          - {
+              target: aarch64-unknown-linux-musl,
+              os: ubuntu-latest,
+              use-cross: true,
+            }
+          - { target: aarch64-apple-darwin, os: macos-latest }
+          - { target: x86_64-pc-windows-msvc, os: windows-latest }
+          - { target: aarch64-pc-windows-msvc, os: windows-latest }
+          - { target: aarch64-linux-android, os: ubuntu-latest }
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -67,7 +62,7 @@ jobs:
         run: |
           rustup target add aarch64-linux-android
           cargo install cargo-ndk
-          
+
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
