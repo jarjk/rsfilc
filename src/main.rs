@@ -76,10 +76,6 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
             clap_complete::generate(sh, &mut Args::command(), "rsfilc", &mut std::io::stdout());
             Ok(())
         }
-        Command::Tui {} => {
-            warn!("TUI is not yet written");
-            Err("TUI is to be written (soon)".into())
-        }
         Command::Timetable { day, current, week } => {
             info!("requested {}: {day:?}", if week { "week" } else { "day" });
             let day = day.unwrap_or_else(|| timetable::default_day(&user));

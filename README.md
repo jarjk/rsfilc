@@ -136,19 +136,6 @@ if you don't feel like renaming at all at a specific moment, use `NO_RENAME=1` (
 -   [ ] fetching administrational processes
 -   [ ] starting new administrational processes
 
-## TUI
-
--   [ ] multiple pages
-
-    -   [ ] evaluations
-    -   [ ] timetable
-    -   [ ] ...
-
--   [ ] beautifully displaying data
-    -   [ ] timetable in nice table
-    -   [ ] plotting evaluations
-    -   [ ] ...
-
 ## Acknowledgements
 
 -   [dependencies used](./Cargo.toml) (although many of them wouldn't be necessary with a proper API, this is **not** the case with e-kréta.)
