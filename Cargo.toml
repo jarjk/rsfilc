@@ -1,7 +1,7 @@
 [package]
 name = "rsfilc"
 version = "0.12.1"
-description = "An E-Kréta console client: cli and todo!(\"TUI\"), written entirely in Rust from the ground up."
+description = "An E-Kréta console client from scratch."
 keywords = ["kreta", "client", "hungarian"]
 categories = ["command-line-interface"]
 edition = "2024"

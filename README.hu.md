@@ -127,19 +127,6 @@ ha épp úgy érzed, hogy semmit nem akarsz átnevezni, alkalmazd a `NO_RENAME=1
 -   [ ] ügyintézések indítása
 -   [ ] ...
 
-## TUI
-
--   [ ] külön oldalak
-
-    -   [ ] jegyek
-    -   [ ] órarend
-    -   [ ] ...
-
--   [ ] adatok szép megjelenítése
-    -   [ ] órarendnek táblázat
-    -   [ ] pl jegyeknek diagram
-    -   [ ] ...
-
 ## Elismerések
 
 Minden használatba vett `crate`-nek köszönet, [itt](./Cargo.toml) találtatnak.  

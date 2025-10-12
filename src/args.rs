@@ -37,8 +37,6 @@ pub struct Args {
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum Command {
-    /// starts the Text User Interface
-    Tui {},
     /// generate completions for <SHELL>
     Completions { shell: clap_complete::Shell },
 
