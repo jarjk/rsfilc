@@ -21,7 +21,7 @@ fern = "0.7"
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-confy = "1.0"
+confy = "2.0"
 nanohtml2text = "0.2"
 ascii_table = { version = "4.0", features = [
   "auto_table_width",
