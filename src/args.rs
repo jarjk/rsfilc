@@ -1,7 +1,7 @@
 //! CLI arguments
 
 use clap::{Parser, Subcommand};
-use log::info;
+use log::{LevelFilter, info};
 use std::io::{self, IsTerminal};
 
 /// default number of entries to show
@@ -21,9 +21,9 @@ pub struct Args {
     /// maximum number of entries to show, WARN: will be ignored by some commands
     #[arg(short, long, default_value_t = NUM)]
     pub number: usize,
-    /// enable verbose logging into the log file
-    #[arg(short, long, default_value_t = false)]
-    pub verbose: bool,
+    /// set the verbosity of logging (to the log file)
+    #[arg(short, long, default_value_t = LevelFilter::Info, env = "RSFILC_LOG")]
+    pub verbosity: LevelFilter,
     /// show cache dir
     #[arg(long, default_value_t = false)]
     pub cache_dir: bool,
