@@ -4,7 +4,7 @@ use config::Config;
 use ekreta::Res;
 use inquire::{Confirm, MultiSelect, Text};
 use log::*;
-use std::{collections::BTreeSet, env, fs::OpenOptions, mem};
+use std::{collections::BTreeSet, fs::OpenOptions, mem};
 use time::MyDate;
 use user::User;
 
@@ -148,11 +148,14 @@ fn set_up_logger(verbosity: LevelFilter) -> Res<()> {
 }
 
 fn guided_renames(conf: &mut Config, user: &User) -> Res<()> {
-    unsafe { env::set_var("NO_CACHE", "1") }; // SAFETY: this runs single-threaded
-    unsafe { env::set_var("NO_RENAME", "1") };
-    let tt = user.get_timetable(chrono::Local::now().date_naive(), true)?;
+    let mut renames_already = mem::take(&mut conf.rename); // taken, newly fetched data won't get renames
+    let today = chrono::Local::now().date_naive();
+    let prev_w = today - chrono::TimeDelta::weeks(1);
+    let next_w = today + chrono::TimeDelta::weeks(1);
+    let mut tt = user.get_timetable(today, true).unwrap_or_default();
+    tt.append(&mut user.get_timetable(prev_w, true).unwrap_or_default());
+    tt.append(&mut user.get_timetable(next_w, true).unwrap_or_default());
     let mut to_rename = BTreeSet::new();
-    let mut renames_already = mem::take(&mut conf.rename);
     let mut insert_if_some = |opt_item: Option<String>| {
         if let Some(item) = opt_item {
             to_rename.insert(item);
@@ -165,20 +168,34 @@ fn guided_renames(conf: &mut Config, user: &User) -> Res<()> {
         insert_if_some(lsn.terem_neve);
     }
     let to_rename = to_rename.into_iter().collect::<Vec<_>>();
-    let to_rename = MultiSelect::new("choose the ones you'd like to rename", to_rename)
-        .prompt_skippable()?
-        .unwrap_or_default();
-    for rename in to_rename {
-        if let Some([_, already_to]) = renames_already.iter().find(|rn| rn[0] == rename) {
+    const PROMPT_MESSAGE: &str = "choose the ones you'd like to rename (Esc to skip)";
+    let to_rename = MultiSelect::new(PROMPT_MESSAGE, to_rename).prompt()?;
+    for mut rename in to_rename {
+        let confirm = |message: String| {
+            Confirm::new(&message)
+                .with_default(false)
+                .prompt_skippable()
+                .map(|j| j.is_some_and(|c| c))
+        };
+        if let Some(already_to) = renames_already.get(&rename) {
             let message = format!("sure? '{rename}' is already replaced with '{already_to}'");
-            let should = Confirm::new(&message).with_default(false).prompt()?;
-            if !should {
+            if !confirm(message)? {
                 continue;
             }
+        } else if let Some((already_from, _already_to)) =
+            renames_already.iter().find(|(_from, to)| **to == rename)
+        {
+            let message = format!("sure? '{rename}' is already replaced from '{already_from}'");
+            if !confirm(message)? {
+                continue;
+            } else {
+                rename = already_from.clone(); // don't rename `to` further, rename it's source
+            }
         }
+
         let message = format!("replace '{rename}' to:");
         if let Ok(Some(to)) = Text::new(&message).prompt_skippable() {
-            renames_already.insert([rename, to]);
+            renames_already.insert(rename, to); // update
         }
     }
     conf.rename = renames_already;

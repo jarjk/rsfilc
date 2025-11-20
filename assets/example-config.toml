@@ -1,24 +1,24 @@
-users = [] # ilyet így csinálj: `rsfilc user --login <OM_ID>`, de elébb mentsd el máshová a rename-t, mert lehet hogy felülírja
-default_userid = "" # s ezt majd kitölti neked
+users = []  # ilyet így csinálj: `rsfilc user --login <OM_ID>`, de elébb mentsd el máshová a rename-t, mert lehet hogy felülírja
 
-rename = [
-	[" (dupla súllyal történelem-földrajz-matematika esetében)", ""],
-	["Írásbeli témazáró dolgozat", "tz"],
-	["Írásbeli röpdolgozat", "röppdoga"],
-	["természettudomány", "bokazokni"],
-  ["Mérés", "Kompetencja? szűűű!"],
-	["Írásbeli dolgozat", "doga"],
-	["digitális kultúra", "info"],
-	["testnevelés", "tesi"],
-	["Informatika", "info"],
-	["történelem", "töri"],
-	["Horváth ", ""],
-	[" feladat", ""],
-	[" László", ""],
-	[" nyelv", ""],
-	[" (2.)", ""],
-	[" (1.)", ""],
-  ["dr. ", ""],
-	["III", "3"],
-  # VIGYÁZAT: mindenképp kerüld ezek átnevezését: ["Igazolt", "felevi_jegy_ertekeles", "evvegi_jegy_ertekeles", "beerkezett", "elkuldott", "torolt", "Elmaradt", "Hianyzas"] nehogy valamit tönkretégy.
-]
+default_userid = ""  # s ezt majd kitölti neked
+
+[rename]
+" (dupla súllyal történelem-földrajz-matematika esetében)" = ""
+"Írásbeli témazáró dolgozat" = "tz"
+"Írásbeli röpdolgozat" = "röppdoga"
+"természettudomány" = "bokazokni"
+"Mérés" = "Kompetencja? szűűű!"
+"Írásbeli dolgozat" = "doga"
+"digitális kultúra" = "info"
+"testnevelés" = "tesi"
+"Informatika" = "info"
+"történelem" = "töri"
+"Horváth " = ""
+" feladat" = ""
+" László" = ""
+" nyelv" = ""
+" (2.)" = ""
+" (1.)" = ""
+"dr. " = ""
+"III" = "3"
+# VIGYÁZAT: mindenképp kerüld ezek átnevezését: ["Igazolt", "felevi_jegy_ertekeles", "evvegi_jegy_ertekeles", "beerkezett", "elkuldott", "torolt", "Elmaradt", "Hianyzas"] nehogy valamit tönkretégy.

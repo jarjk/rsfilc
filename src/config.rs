@@ -1,6 +1,7 @@
 use crate::{Res, User};
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, path::PathBuf};
+use std::collections::{BTreeMap, BTreeSet};
+use std::path::PathBuf;
 
 pub const APP_NAME: &str = "rsfilc";
 const CONFIG_NAME: &str = "config";
@@ -9,7 +10,7 @@ const CONFIG_NAME: &str = "config";
 pub struct Config {
     pub default_userid: String,
     pub users: BTreeSet<User>,
-    pub rename: BTreeSet<[String; 2]>,
+    pub rename: BTreeMap<String, String>,
 }
 impl Config {
     pub fn load() -> Res<Config> {
