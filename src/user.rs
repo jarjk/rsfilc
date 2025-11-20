@@ -6,7 +6,7 @@ use ekreta::{
 };
 use inquire::{Password, PasswordDisplayMode, Select};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 
 pub fn handle(
     userid: Option<String>,
@@ -70,13 +70,13 @@ pub struct User {
 }
 impl Default for User {
     fn default() -> Self {
-        Self::new(String::new(), String::new(), BTreeSet::new())
+        Self::new(String::new(), String::new(), BTreeMap::new())
     }
 }
 
 fn deser_account<'de, D: Deserializer<'de>>(deser: D) -> Result<Account, D::Error> {
     let schoolid = String::deserialize(deser)?;
-    Ok(Account::new(schoolid, BTreeSet::new()))
+    Ok(Account::new(schoolid, BTreeMap::new()))
 }
 
 fn ser_account<S: Serializer>(account: &Account, ser: S) -> Result<S::Ok, S::Error> {
@@ -105,7 +105,7 @@ impl Ord for User {
 // basic stuff
 impl User {
     /// create new instance of [`User`]
-    pub fn new(userid: String, schoolid: String, rename: BTreeSet<[String; 2]>) -> Self {
+    pub fn new(userid: String, schoolid: String, rename: BTreeMap<String, String>) -> Self {
         Self {
             userid,
             account: Account::new(schoolid, rename),
@@ -126,7 +126,7 @@ impl User {
         let schoolid = schools[school_idx].azonosito.clone();
         info!("received schoolid {schoolid} from cli");
 
-        let user = Self::new(userid, schoolid, BTreeSet::new());
+        let user = Self::new(userid, schoolid, BTreeMap::new());
         user.get_userinfo()?;
 
         user.save(conf);
