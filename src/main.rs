@@ -27,7 +27,7 @@ fn main() -> Res<()> {
     // parse args
     let cli_args = Args::parse();
     // set up fern
-    set_up_logger(cli_args.verbose)?;
+    set_up_logger(cli_args.verbosity)?;
     // load config from file, eg.: users
     let mut config = Config::load()?;
 
@@ -127,7 +127,7 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
     }
 }
 
-fn set_up_logger(verbose: bool) -> Res<()> {
+fn set_up_logger(verbosity: LevelFilter) -> Res<()> {
     let path = paths::cache_dir("")
         .ok_or("no cache dir")?
         .join(config::APP_NAME)
@@ -141,11 +141,7 @@ fn set_up_logger(verbose: bool) -> Res<()> {
                 record.target(),
             ));
         })
-        .level(if verbose {
-            log::LevelFilter::Debug
-        } else {
-            log::LevelFilter::Info
-        })
+        .level(verbosity)
         .chain(OpenOptions::new().create(true).append(true).open(path)?)
         .apply()?;
     Ok(())
