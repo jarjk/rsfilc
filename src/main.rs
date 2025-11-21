@@ -171,23 +171,23 @@ fn guided_renames(user: &User) -> Res<()> {
     let to_rename = to_rename.into_iter().collect::<Vec<_>>();
     const PROMPT_MESSAGE: &str = "choose the ones you'd like to rename (Esc to skip)";
     let to_rename = MultiSelect::new(PROMPT_MESSAGE, to_rename).prompt()?;
+    let confirm = |message: &str| {
+        Confirm::new(message)
+            .with_default(false)
+            .prompt_skippable()
+            .map(|c| c.is_some_and(|c| c))
+    };
     for mut rename in to_rename {
-        let confirm = |message: String| {
-            Confirm::new(&message)
-                .with_default(false)
-                .prompt_skippable()
-                .map(|j| j.is_some_and(|c| c))
-        };
         if let Some(already_to) = renames_already.get(&rename) {
             let message = format!("sure? '{rename}' is already replaced with '{already_to}'");
-            if !confirm(message)? {
+            if !confirm(&message)? {
                 continue;
             }
         } else if let Some((already_from, _already_to)) =
             renames_already.iter().find(|(_from, to)| **to == rename)
         {
             let message = format!("sure? '{rename}' is already replaced from '{already_from}'");
-            if !confirm(message)? {
+            if !confirm(&message)? {
                 continue;
             } else {
                 rename = already_from.clone(); // don't rename `to` further, rename it's source
@@ -196,6 +196,9 @@ fn guided_renames(user: &User) -> Res<()> {
 
         let message = format!("replace '{rename}' to:");
         if let Ok(Some(to)) = Text::new(&message).prompt_skippable() {
+            if to.is_empty() && !confirm("sure? continue with empty rename?")? {
+                continue;
+            }
             renames_already.insert(rename, to); // update
         }
     }
