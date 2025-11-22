@@ -1,9 +1,12 @@
 use crate::{Res, User};
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, path::PathBuf};
+use std::{collections::BTreeSet, path::PathBuf, sync::LazyLock};
 
 pub const APP_NAME: &str = "rsfilc";
 const CONFIG_NAME: &str = "config";
+/// configurations: users, default user, renames
+/// loaded on first use, clone and mutate if needed, careful with use afterwards
+pub static CONFIG: LazyLock<Config> = LazyLock::new(|| Config::load().unwrap());
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Config {
