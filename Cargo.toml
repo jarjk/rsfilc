@@ -1,6 +1,6 @@
 [package]
 name = "rsfilc"
-version = "0.12.1"
+version = "0.13.0"
 description = "An E-Kréta console client from scratch."
 keywords = ["kreta", "client", "hungarian"]
 categories = ["command-line-interface"]
