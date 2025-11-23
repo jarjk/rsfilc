@@ -1,6 +1,7 @@
 use crate::{Res, User};
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, path::PathBuf, sync::LazyLock};
+use std::collections::{BTreeMap, BTreeSet};
+use std::{path::PathBuf, sync::LazyLock};
 
 pub const APP_NAME: &str = "rsfilc";
 const CONFIG_NAME: &str = "config";
@@ -12,7 +13,7 @@ pub static CONFIG: LazyLock<Config> = LazyLock::new(|| Config::load().unwrap());
 pub struct Config {
     pub default_userid: String,
     pub users: BTreeSet<User>,
-    pub rename: BTreeSet<[String; 2]>,
+    pub rename: BTreeMap<String, String>,
 }
 impl Config {
     pub fn load() -> Res<Config> {
