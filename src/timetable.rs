@@ -192,7 +192,21 @@ pub fn print_day(mut lessons: Vec<Lesson>, tests: &[AnnouncedTest]) {
 
 /// print week timetable
 fn print_week(mut lsns_week: Vec<Lesson>) {
-    lsns_week.retain(|l| !l.kamu_smafu()); // delete fake lessons
+    let mut i = 0; // fix fake lessons, their headers would be missed: "Tanítás nélküli munkanap (Nem órarendi nap) (Csütörtök)"
+    while i < lsns_week.len() {
+        if lsns_week[i].kamu_smafu() {
+            let lsn = lsns_week.remove(i);
+            for (j, header) in lsn.nev.split('(').enumerate() {
+                let mut new_l = lsn.clone();
+                new_l.oraszam = Some(j as u8);
+                new_l.nev = header.trim().replace(')', "");
+                lsns_week.insert(i, new_l);
+                i += 1;
+            }
+            i += 1;
+        }
+        i += 1;
+    }
     if lsns_week.is_empty() {
         return;
     }
@@ -204,6 +218,7 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
 
     for lsn in lsns_week {
         if lsn.date_naive() != prev_d {
+            // let diff = (prev_d - lsn.date_naive()).abs().num_days() as usize; // could use instead of hard-coded 1 for d_ix
             prev_d = lsn.date_naive();
             d_ix += 1; // next day
         }
@@ -225,6 +240,8 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
             lsn.nev.on_yellow()
         } else if lsn.bejelentett_szamonkeres_uid.is_some() {
             lsn.nev.on_blue()
+        } else if lsn.kamu_smafu() {
+            lsn.nev.italic().strike()
         } else {
             lsn.nev.resetting()
         }
@@ -238,7 +255,7 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
 /// # SAFETY
 /// make sure `lessons` is not empty
 fn index_tt(lessons: &[Lesson]) -> (u8, Vec<Vec<String>>) {
-    let first_h_ix = lessons.first().map(Lesson::d_num).unwrap();
+    let first_h_ix = lessons.iter().map(Lesson::d_num).min().unwrap();
     let max_h_ix = lessons.iter().map(Lesson::d_num).max().unwrap();
     let day_start = u8::from(first_h_ix != 0); // day shall start on `day_start`th lesson, 0 if 0, 1 otherwise
 
