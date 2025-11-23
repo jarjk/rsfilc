@@ -1,6 +1,6 @@
 use args::{Args, Command};
 use clap::{CommandFactory, Parser};
-use config::Config;
+use config::{CONFIG, Config};
 use ekreta::Res;
 use inquire::{Confirm, MultiSelect, Text};
 use log::*;
@@ -28,16 +28,14 @@ fn main() -> Res<()> {
     let cli_args = Args::parse();
     // set up fern
     set_up_logger(cli_args.verbosity)?;
-    // load config from file, eg.: users
-    let mut config = Config::load()?;
 
     // handle cli args and execute program
-    run(cli_args, &mut config)?;
+    run(cli_args)?;
 
     Ok(())
 }
 
-fn run(args: Args, conf: &mut Config) -> Res<()> {
+fn run(args: Args) -> Res<()> {
     if args.command.is_none() {
         if args.cache_dir {
             let cache_dir = paths::cache_dir("").ok_or("no cache dir found")?;
@@ -61,9 +59,9 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
     // have a valid user
     let user = if command.user_needed() {
         if let Some(who) = args.user.as_ref() {
-            User::load(conf, who).ok_or(format!("invalid user ({who}) specified"))?
+            User::load(&CONFIG, who).ok_or(format!("invalid user ({who}) specified"))?
         } else {
-            User::load(conf, &conf.default_userid)
+            User::load(&CONFIG, &CONFIG.default_userid)
                 .ok_or("no user found, please log in to an account with `rsfilc user --login`")?
         }
     } else {
@@ -108,7 +106,7 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
             switch,
             cache_dir,
             userid,
-        } => user::handle(userid, login, conf, logout, switch, cache_dir, &args),
+        } => user::handle(userid, login, logout, switch, cache_dir, &args),
 
         Command::Schools { search } => schools::handle(search, &args),
 
@@ -123,7 +121,7 @@ fn run(args: Args, conf: &mut Config) -> Res<()> {
             }
             Ok(())
         }
-        Command::Rename => guided_renames(conf, &user),
+        Command::Rename => guided_renames(&user),
     }
 }
 
@@ -147,14 +145,17 @@ fn set_up_logger(verbosity: LevelFilter) -> Res<()> {
     Ok(())
 }
 
-fn guided_renames(conf: &mut Config, user: &User) -> Res<()> {
+fn guided_renames(user: &User) -> Res<()> {
+    let mut conf = CONFIG.clone(); // don't use plain CONFIG afterwards
     let mut renames_already = mem::take(&mut conf.rename); // taken, newly fetched data won't get renames
+
     let today = chrono::Local::now().date_naive();
     let prev_w = today - chrono::TimeDelta::weeks(1);
     let next_w = today + chrono::TimeDelta::weeks(1);
     let mut tt = user.get_timetable(today, true).unwrap_or_default();
     tt.append(&mut user.get_timetable(prev_w, true).unwrap_or_default());
     tt.append(&mut user.get_timetable(next_w, true).unwrap_or_default());
+
     let mut to_rename = BTreeSet::new();
     let mut insert_if_some = |opt_item: Option<String>| {
         if let Some(item) = opt_item {
