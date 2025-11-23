@@ -11,7 +11,6 @@ use std::collections::BTreeSet;
 pub fn handle(
     userid: Option<String>,
     login: bool,
-    conf: &mut Config,
     logout: bool,
     switch: bool,
     cache_dir: bool,
@@ -20,14 +19,15 @@ pub fn handle(
     let Some(name) = userid else {
         if cache_dir {
             let cache_dir =
-                paths::cache_dir(&conf.default_userid).ok_or("no cache dir found for user")?;
+                paths::cache_dir(&CONFIG.default_userid).ok_or("no cache dir found for user")?;
             println!("{}", cache_dir.display());
             return Ok(());
         }
-        return information::handle(&conf.default_userid, conf.users.iter(), args);
+        return information::handle(&CONFIG.default_userid, CONFIG.users.iter(), args);
     };
+    let mut conf = CONFIG.clone(); // will mutate, don't use plain CONFIG afterwards
     if login {
-        let res = User::login(name.clone(), conf).inspect_err(|_| {
+        let res = User::login(name.clone(), &mut conf).inspect_err(|_| {
             eprintln!(
                 "couldn't log in to user account, check your credentials and connection with Kréta"
             );
