@@ -196,10 +196,10 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
     while i < lsns_week.len() {
         if lsns_week[i].kamu_smafu() {
             let lsn = lsns_week.remove(i);
-            for (j, header) in lsn.nev.split('(').enumerate() {
+            for (j, header) in lsn.nev.split_ascii_whitespace().enumerate() {
                 let mut new_l = lsn.clone();
                 new_l.oraszam = Some(j as u8);
-                new_l.nev = header.trim().replace(')', "");
+                new_l.nev = header.trim().to_string();
                 lsns_week.insert(i, new_l);
                 i += 1;
             }
