@@ -33,3 +33,6 @@ inquire = { version = "0.9", default-features = false, features = [
   "console",
 ] }
 yansi = "1.0"
+
+[patch.crates-io]
+ascii_table = { git = "https://gitlab.com/jark8/ascii-table", branch = "manual-color-code-parse" }
