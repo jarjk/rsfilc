@@ -25,7 +25,7 @@ confy = { version = "1.0", default-features = false, features = [
   "basic_toml_conf"
 ] }
 nanohtml2text = "0.2"
-ascii_table = { version = "4.0", features = [
+ascii_table = { version = "5.0", features = [
   "auto_table_width",
   "color_codes",
 ] }
