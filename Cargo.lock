@@ -260,9 +260,9 @@ checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
 
 [[package]]
 name = "ekreta"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9bea074e81ca56d00b5a2bd4cfe7b0873c237107c7655cb1870ffc8d811a0e3"
+checksum = "7ec90dda687da7f386361516c3921a4317ea9877f7aade0a67496a5003f94aec"
 dependencies = [
  "chrono",
  "log",

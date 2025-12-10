@@ -255,14 +255,13 @@ impl User {
                 return Ok(lessons.iter().filter(|&x| is_cached(x)).cloned().collect());
             }
         }
-        let remain_relevant = |lessons: &mut Vec<Lesson>| {
-            lessons.retain(|lsn| (from..=to).contains(&lsn.date_naive()));
-        };
+        let in_fetched_irval = |lsn: &Lesson| (from..=to).contains(&lsn.date_naive());
+        let remain_relevant = |lessons: &mut Vec<Lesson>| lessons.retain(in_fetched_irval);
         match self.fetch_vec((from, to)) {
             Ok(mut fetched_items) => {
                 let mut lessons = cached_tt.unwrap_or_default();
                 // delete cached if fresh was fetched for that period
-                lessons.retain(|cl| !(from..=to).contains(&cl.date_naive()));
+                lessons.retain(|cl| !in_fetched_irval(cl));
                 lessons.append(&mut fetched_items);
                 lessons.sort_unstable_by_key(|l| l.kezdet_idopont);
                 self.store_cache(&lessons)?;

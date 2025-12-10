@@ -224,6 +224,10 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
     let mut d_ix = 1; // day index
     let nxt_lsn = next_lesson(&lsns_week).cloned();
 
+    // SAFETY: got them, would've returned otherwise
+    let start = lsns_week.first().unwrap().date_naive().pretty();
+    let end = lsns_week.last().unwrap().date_naive().pretty();
+
     for lsn in lsns_week {
         if lsn.date_naive() != prev_d {
             // let diff = (prev_d - lsn.date_naive()).abs().num_days() as usize; // could use instead of hard-coded 1 for d_ix
@@ -256,6 +260,7 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
         .bold();
         data[h_ix][d_ix].push_str(&format!("{subj} {}", lsn.normalised_room().italic().dim()));
     }
+    println!(" {} -> {}", start.bold(), end.bold());
     #[rustfmt::skip]
     utils::print_table_wh([".", "HÉTFŐ", "KEDD", "SZERDA", "CSÜTÖRTÖK", "PÉNTEK", "SZOMBAT"], data);
 }
