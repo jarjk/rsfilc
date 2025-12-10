@@ -195,7 +195,15 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
     let mut i = 0; // fix fake lessons, their headers would be missed: "Tanítás nélküli munkanap (Nem órarendi nap) (Csütörtök)"
     while i < lsns_week.len() {
         if lsns_week[i].kamu_smafu() {
-            let lsn = lsns_week.remove(i);
+            let mut lsn = lsns_week.remove(i);
+            if let Some(nxt_lsn) = lsns_week.get(i)
+                && lsn.date_naive() == nxt_lsn.date_naive()
+            {
+                lsn.oraszam = Some(0);
+                lsns_week.insert(i, lsn);
+                i += 1;
+                continue;
+            }
             for (j, header) in lsn.nev.split_ascii_whitespace().enumerate() {
                 let mut new_l = lsn.clone();
                 new_l.oraszam = Some(j as u8);
@@ -241,7 +249,7 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
         } else if lsn.bejelentett_szamonkeres_uid.is_some() {
             lsn.nev.on_blue()
         } else if lsn.kamu_smafu() {
-            lsn.nev.italic().strike()
+            lsn.nev.italic().underline()
         } else {
             lsn.nev.resetting()
         }
@@ -252,7 +260,9 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
     utils::print_table_wh([".", "HÉTFŐ", "KEDD", "SZERDA", "CSÜTÖRTÖK", "PÉNTEK", "SZOMBAT"], data);
 }
 
-/// # SAFETY
+/// # Usage
+/// returns (the start of the day, the empty time-table)
+/// # Safety
 /// - make sure `lessons` is not empty
 /// - make sure all lessons have their proper [`Lesson::d_num`]s, not [`None`]
 fn index_tt(lessons: &[Lesson]) -> (u8, Vec<Vec<String>>) {
