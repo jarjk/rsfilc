@@ -203,7 +203,7 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
                 lsns_week.insert(i, new_l);
                 i += 1;
             }
-            i += 1;
+            i -= 1;
         }
         i += 1;
     }
@@ -253,7 +253,8 @@ fn print_week(mut lsns_week: Vec<Lesson>) {
 }
 
 /// # SAFETY
-/// make sure `lessons` is not empty
+/// - make sure `lessons` is not empty
+/// - make sure all lessons have their proper [`Lesson::d_num`]s, not [`None`]
 fn index_tt(lessons: &[Lesson]) -> (u8, Vec<Vec<String>>) {
     let first_h_ix = lessons.iter().map(Lesson::d_num).min().unwrap();
     let max_h_ix = lessons.iter().map(Lesson::d_num).max().unwrap();
