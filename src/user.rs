@@ -261,14 +261,8 @@ impl User {
         match self.fetch_vec((from, to)) {
             Ok(mut fetched_items) => {
                 let mut lessons = cached_tt.unwrap_or_default();
-                // delete cached if same but fresh was fetched
-                lessons.retain(|cl| {
-                    !fetched_items.iter().any(|fl: &Lesson| {
-                        cl.kezdet_idopont == fl.kezdet_idopont
-                            && cl.veg_idopont == fl.veg_idopont
-                            && cl.subject_id() == fl.subject_id()
-                    })
-                });
+                // delete cached if fresh was fetched for that period
+                lessons.retain(|cl| !(from..=to).contains(&cl.date_naive()));
                 lessons.append(&mut fetched_items);
                 lessons.sort_unstable_by_key(|l| l.kezdet_idopont);
                 self.store_cache(&lessons)?;
@@ -299,8 +293,8 @@ impl User {
 
     gen_get_for! { get_absences, Absence, true,
         (|absences: &mut Vec<Absence>| {
-                absences.sort_unstable_by_key(|a| (a.ora.kezdo_datum, !a.igazolt()));
-                absences.dedup_by_key(|a| a.ora.clone());
+            absences.sort_unstable_by_key(|a| (a.ora.kezdo_datum, !a.igazolt()));
+            absences.dedup_by_key(|a| a.ora.clone());
         })
     }
 }
