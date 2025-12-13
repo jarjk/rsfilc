@@ -67,6 +67,7 @@ version = "4.0.8"
 source = "git+https://gitlab.com/jark8/ascii-table?branch=manual-color-code-parse#b55560e18866d1303ddfe4f106a2681f32af07d5"
 dependencies = [
  "termize",
+ "unicode-width",
 ]
 
 [[package]]

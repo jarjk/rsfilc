@@ -28,6 +28,7 @@ nanohtml2text = "0.2"
 ascii_table = { version = "4.0", features = [
   "auto_table_width",
   "color_codes",
+  "wide_characters",
 ] }
 inquire = { version = "0.9", default-features = false, features = [
   "console",
