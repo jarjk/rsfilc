@@ -255,20 +255,13 @@ impl User {
                 return Ok(lessons.iter().filter(|&x| is_cached(x)).cloned().collect());
             }
         }
-        let remain_relevant = |lessons: &mut Vec<Lesson>| {
-            lessons.retain(|lsn| (from..=to).contains(&lsn.date_naive()));
-        };
+        let in_fetched_irval = |lsn: &Lesson| (from..=to).contains(&lsn.date_naive());
+        let remain_relevant = |lessons: &mut Vec<Lesson>| lessons.retain(in_fetched_irval);
         match self.fetch_vec((from, to)) {
             Ok(mut fetched_items) => {
                 let mut lessons = cached_tt.unwrap_or_default();
-                // delete cached if same but fresh was fetched
-                lessons.retain(|cl| {
-                    !fetched_items.iter().any(|fl: &Lesson| {
-                        cl.kezdet_idopont == fl.kezdet_idopont
-                            && cl.veg_idopont == fl.veg_idopont
-                            && cl.subject_id() == fl.subject_id()
-                    })
-                });
+                // delete cached if fresh was fetched for that period
+                lessons.retain(|cl| !in_fetched_irval(cl));
                 lessons.append(&mut fetched_items);
                 lessons.sort_unstable_by_key(|l| l.kezdet_idopont);
                 self.store_cache(&lessons)?;
@@ -299,8 +292,8 @@ impl User {
 
     gen_get_for! { get_absences, Absence, true,
         (|absences: &mut Vec<Absence>| {
-                absences.sort_unstable_by_key(|a| (a.ora.kezdo_datum, !a.igazolt()));
-                absences.dedup_by_key(|a| a.ora.clone());
+            absences.sort_unstable_by_key(|a| (a.ora.kezdo_datum, !a.igazolt()));
+            absences.dedup_by_key(|a| a.ora.clone());
         })
     }
 }
