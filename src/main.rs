@@ -89,11 +89,11 @@ fn run(args: Args) -> Res<()> {
             ghost,
         } => evals::handle(&user, filter, subj, &ghost, average, &args),
 
-        Command::Messages { notes, id } => {
+        Command::Messages { notes, interactive, id } => {
             if notes {
-                messages::handle_note_msgs(&user, id, &args)
+                messages::handle_note_msgs(&user, id, interactive, &args)
             } else {
-                messages::handle(&user, id, &args)
+                messages::handle(&user, id, interactive, &args)
             }
         }
 

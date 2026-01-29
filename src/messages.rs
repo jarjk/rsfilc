@@ -2,10 +2,30 @@
 
 use crate::{paths::download_dir, time::MyDate, user::User, utils};
 use ekreta::{Endpoint, Res};
+use inquire::Select;
 use std::{char, fmt::Write};
 
-pub fn handle_note_msgs(user: &User, id: Option<isize>, args: &crate::Args) -> Res<()> {
+pub fn handle_note_msgs(user: &User, mut id: Option<isize>, interactive: bool, args: &crate::Args) -> Res<()> {
     let notes = user.get_note_msgs((None, None))?;
+    if interactive {
+        let items = notes
+            .iter()
+            .map(|t| {
+                format!(
+                    "[{}] {}: {}",
+                    &t.datum.date_naive(),
+                    &t.keszito_tanar_neve,
+                    &t.cim
+                )
+            })
+            .rev()
+            .collect::<Vec<_>>();
+        match isize::try_from(Select::new("Open message:", items).raw_prompt()?.index).ok() {
+            Some(signed_id) => id = Option::from(isize::try_from(notes.len())? - signed_id - 1),
+            _ => {}
+        };
+        // info!("received messageid {id} from cli");
+    }
     if let Some(ix) = id_to_ix(id, notes.len()) {
         let Some(nm) = notes.get(ix) else {
             return Err(format!("can't find message with id: {ix}").into());
@@ -26,8 +46,30 @@ pub fn handle_note_msgs(user: &User, id: Option<isize>, args: &crate::Args) -> R
     utils::print_table(&data, headers, args.reverse, args.number, disp)
 }
 
-pub fn handle(user: &User, id: Option<isize>, args: &crate::Args) -> Res<()> {
+pub fn handle(user: &User, mut id: Option<isize>, interactive: bool, args: &crate::Args) -> Res<()> {
     let msg_oviews = user.get_msg_oviews()?;
+    if interactive {
+        let items = msg_oviews
+            .iter()
+            .map(|t| {
+                format!(
+                    "[{}] {}{}",
+                    &t.uzenet_kuldes_datum.date(),
+                    t.uzenet_felado_nev
+                        .as_ref()
+                        .map(|n| format!("{n}: "))
+                        .unwrap_or_default(),
+                    &t.uzenet_targy
+                )
+            })
+            .rev()
+            .collect::<Vec<_>>();
+        match isize::try_from(Select::new("Open message:", items).raw_prompt()?.index).ok() {
+            Some(signed_id) => id = Option::from(isize::try_from(msg_oviews.len())? - signed_id - 1),
+            _ => {}
+        };
+        // info!("received messageid {id} from cli");
+    }
     if let Some(ix) = id_to_ix(id, msg_oviews.len()) {
         let msg_oview = msg_oviews
             .get(ix)
