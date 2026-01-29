@@ -14,6 +14,7 @@ pub struct Config {
     pub default_userid: String,
     pub users: BTreeSet<User>,
     pub rename: BTreeMap<String, String>,
+    vim_mode: bool,
 }
 impl Config {
     pub fn load() -> Res<Config> {
@@ -53,5 +54,8 @@ impl Config {
     }
     pub fn path() -> Res<PathBuf> {
         Ok(confy::get_configuration_file_path(APP_NAME, CONFIG_NAME)?)
+    }
+    pub fn get_vim_mode(&self) -> bool {
+        self.vim_mode
     }
 }

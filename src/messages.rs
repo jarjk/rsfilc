@@ -1,6 +1,6 @@
 //! messages from teachers and staff
 
-use crate::{paths::download_dir, time::MyDate, user::User, utils};
+use crate::{config::CONFIG, paths::download_dir, time::MyDate, user::User, utils};
 use ekreta::{Endpoint, Res};
 use inquire::Select;
 use std::{char, fmt::Write};
@@ -20,7 +20,7 @@ pub fn handle_note_msgs(user: &User, mut id: Option<isize>, interactive: bool, a
             })
             .rev()
             .collect::<Vec<_>>();
-        match isize::try_from(Select::new("Open message:", items).raw_prompt()?.index).ok() {
+        match isize::try_from(Select::new("Open message:", items).with_vim_mode(CONFIG.get_vim_mode()).raw_prompt()?.index).ok() {
             Some(signed_id) => id = Option::from(isize::try_from(notes.len())? - signed_id - 1),
             _ => {}
         };
@@ -64,7 +64,7 @@ pub fn handle(user: &User, mut id: Option<isize>, interactive: bool, args: &crat
             })
             .rev()
             .collect::<Vec<_>>();
-        match isize::try_from(Select::new("Open message:", items).raw_prompt()?.index).ok() {
+        match isize::try_from(Select::new("Open message:", items).with_vim_mode(CONFIG.get_vim_mode()).raw_prompt()?.index).ok() {
             Some(signed_id) => id = Option::from(isize::try_from(msg_oviews.len())? - signed_id - 1),
             _ => {}
         };
