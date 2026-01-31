@@ -68,6 +68,9 @@ pub enum Command {
         /// calculate average
         #[arg(short, long, default_value_t = false)]
         average: bool,
+        /// show textplot
+        #[arg(short, long, requires = "average", default_value_t = false)]
+        plot: bool,
         /// ghost evals
         #[arg(requires = "average")]
         ghost: Vec<u8>,

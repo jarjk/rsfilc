@@ -17,6 +17,7 @@ mod evals;
 mod information;
 mod messages;
 mod paths;
+mod plotting;
 mod schools;
 mod time;
 mod timetable;
@@ -85,8 +86,9 @@ fn run(args: Args) -> Res<()> {
             subject: subj,
             filter,
             average,
+            plot,
             ghost,
-        } => evals::handle(&user, filter, subj, &ghost, average, &args),
+        } => evals::handle(&user, filter, subj, &ghost, average, plot, &args),
 
         Command::Messages { notes, id } => {
             if notes {

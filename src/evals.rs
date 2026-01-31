@@ -1,6 +1,6 @@
 //! evaluations/grades the user received
 
-use crate::{time::MyDate, user::User, utils};
+use crate::{plotting::ChartBuilder, time::MyDate, user::User, utils};
 use ekreta::{Evaluation, Res};
 use log::info;
 
@@ -10,6 +10,7 @@ pub fn handle(
     subj: Option<String>,
     ghost: &[u8],
     avg: bool,
+    plot: bool,
     args: &crate::Args,
 ) -> Res<()> {
     let mut evals = user.get_evals((None, None))?;
@@ -23,7 +24,24 @@ pub fn handle(
     if avg {
         let avg = calc_average(&evals, ghost);
         println!("Average: {avg:.2}");
+        if plot {
+            let mut sum = 0.0f32;
+            let points: Vec<(f32, f32)> = evals
+                .iter()
+                .filter(|eval| !eval.evvegi() && !eval.felevi())
+                .filter_map(|eval| eval.szam_ertek)
+                .chain(ghost.iter().filter(|g| *g > &0 && *g <= &5).copied())
+                .enumerate()
+                .map(|(i, eval)| {
+                    sum += eval as f32;
+                    let avg_i = sum / (i as f32 + 1.0);
+                    (i as f32, avg_i)
+                })
+                .collect();
 
+            let mut builder = ChartBuilder::new(points);
+            builder.build_and_display(true, true, true, false);
+        }
         return Ok(());
     }
     #[rustfmt::skip]
