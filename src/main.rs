@@ -28,7 +28,8 @@ fn main() -> Res<()> {
     let cli_args = Args::parse();
     // set up fern
     set_up_logger(cli_args.verbosity)?;
-
+    // respect `NO_COLOR`
+    yansi::whenever(yansi::Condition::YES_COLOR);
     // handle cli args and execute program
     run(cli_args)?;
 
