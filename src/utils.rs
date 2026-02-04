@@ -23,6 +23,14 @@ pub fn type_to_kind_name<T>() -> Res<String> {
     Ok(kind)
 }
 
+/// interactive inquire index select
+pub fn i_select<D: std::fmt::Display>(msg: &str, items: Vec<D>) -> Res<usize> {
+    Ok(inquire::Select::new(msg, items)
+        .with_vim_mode(crate::config::CONFIG.vim_mode)
+        .raw_prompt()?
+        .index)
+}
+
 #[macro_export]
 /// generate get fn named `fn_name` for type `ep`, specify whether
 /// content once `cached_can_change` or not then sort with `sorting`

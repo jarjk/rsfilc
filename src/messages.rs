@@ -1,29 +1,25 @@
 //! messages from teachers and staff
 
-use crate::{config::CONFIG, paths::download_dir, time::MyDate, user::User, utils};
+use crate::{paths::download_dir, time::MyDate, user::User, utils};
 use ekreta::{Endpoint, Res};
-use inquire::Select;
 use std::{char, fmt::Write};
 
-pub fn handle_note_msgs(user: &User, mut id: Option<isize>, interactive: bool, args: &crate::Args) -> Res<()> {
+pub fn handle_note_msgs(
+    user: &User,
+    mut id: Option<isize>,
+    interactive: bool,
+    args: &crate::Args,
+) -> Res<()> {
     let notes = user.get_note_msgs((None, None))?;
     if interactive {
-        let items = notes
-            .iter()
-            .map(|t| {
-                format!(
-                    "[{}] {}: {}",
-                    &t.datum.date_naive(),
-                    &t.keszito_tanar_neve,
-                    &t.cim
-                )
-            })
-            .rev()
-            .collect::<Vec<_>>();
-        match isize::try_from(Select::new("Open message:", items).with_vim_mode(CONFIG.get_vim_mode()).raw_prompt()?.index).ok() {
-            Some(signed_id) => id = Option::from(isize::try_from(notes.len())? - signed_id - 1),
-            _ => {}
+        let disp = |note_msg: &ekreta::NoteMsg| {
+            let date = note_msg.datum.date_naive();
+            format!("[{date}] {}: {}", note_msg.keszito_tanar_neve, note_msg.cim)
         };
+        let items = notes.iter().map(disp).rev().collect::<Vec<_>>();
+        let rev_ix = utils::i_select("Open message:", items)?;
+        let signed_id = isize::try_from(rev_ix)?;
+        id = Some(isize::try_from(notes.len())? - signed_id - 1);
         // info!("received messageid {id} from cli");
     }
     if let Some(ix) = id_to_ix(id, notes.len()) {
@@ -46,28 +42,22 @@ pub fn handle_note_msgs(user: &User, mut id: Option<isize>, interactive: bool, a
     utils::print_table(&data, headers, args.reverse, args.number, disp)
 }
 
-pub fn handle(user: &User, mut id: Option<isize>, interactive: bool, args: &crate::Args) -> Res<()> {
+pub fn handle(user: &User, mut id: Option<isize>, interact: bool, args: &crate::Args) -> Res<()> {
     let msg_oviews = user.get_msg_oviews()?;
-    if interactive {
-        let items = msg_oviews
-            .iter()
-            .map(|t| {
-                format!(
-                    "[{}] {}{}",
-                    &t.uzenet_kuldes_datum.date(),
-                    t.uzenet_felado_nev
-                        .as_ref()
-                        .map(|n| format!("{n}: "))
-                        .unwrap_or_default(),
-                    &t.uzenet_targy
-                )
-            })
-            .rev()
-            .collect::<Vec<_>>();
-        match isize::try_from(Select::new("Open message:", items).with_vim_mode(CONFIG.get_vim_mode()).raw_prompt()?.index).ok() {
-            Some(signed_id) => id = Option::from(isize::try_from(msg_oviews.len())? - signed_id - 1),
-            _ => {}
+    if interact {
+        let disp = |msg_oview: &ekreta::MsgOview| {
+            let date = msg_oview.uzenet_kuldes_datum.date();
+            let sender = msg_oview
+                .uzenet_felado_nev
+                .as_ref()
+                .map(|n| format!("{n}: "))
+                .unwrap_or_default();
+            format!("[{date}] {sender}{}", msg_oview.uzenet_targy)
         };
+        let items = msg_oviews.iter().map(disp).rev().collect::<Vec<_>>();
+        let rev_ix = utils::i_select("Open message:", items)?;
+        let signed_id = isize::try_from(rev_ix)?;
+        id = Some(isize::try_from(msg_oviews.len())? - signed_id - 1);
         // info!("received messageid {id} from cli");
     }
     if let Some(ix) = id_to_ix(id, msg_oviews.len()) {

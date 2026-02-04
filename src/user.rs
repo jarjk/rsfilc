@@ -4,7 +4,7 @@ use ekreta::{
     Absence, Account, AnnouncedTest as Ancd, Evaluation as Eval, HeaderMap, LDateTime, Lesson,
     MsgItem, MsgOview, OptIrval, Token, consts, header,
 };
-use inquire::{Password, PasswordDisplayMode, Select};
+use inquire::{Password, PasswordDisplayMode};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::BTreeMap;
 
@@ -120,10 +120,7 @@ impl User {
 
         let schools = schools::get()?;
         let items = schools.iter().map(|s| &s.nev).collect::<Vec<_>>();
-        let school_idx = Select::new("your school's name:", items)
-            .with_vim_mode(conf.get_vim_mode())
-            .raw_prompt()?
-            .index;
+        let school_idx = utils::i_select("your school's name:", items)?;
         let schoolid = schools[school_idx].azonosito.clone();
         info!("received schoolid {schoolid} from cli");
 

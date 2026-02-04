@@ -89,7 +89,11 @@ fn run(args: Args) -> Res<()> {
             ghost,
         } => evals::handle(&user, filter, subj, &ghost, average, &args),
 
-        Command::Messages { notes, interactive, id } => {
+        Command::Messages {
+            notes,
+            interactive,
+            id,
+        } => {
             if notes {
                 messages::handle_note_msgs(&user, id, interactive, &args)
             } else {
@@ -171,7 +175,9 @@ fn guided_renames(user: &User) -> Res<()> {
     }
     let to_rename = to_rename.into_iter().collect::<Vec<_>>();
     const PROMPT_MESSAGE: &str = "choose the ones you'd like to rename (Esc to skip)";
-    let to_rename = MultiSelect::new(PROMPT_MESSAGE, to_rename).with_vim_mode(CONFIG.get_vim_mode()).prompt()?;
+    let to_rename = MultiSelect::new(PROMPT_MESSAGE, to_rename)
+        .with_vim_mode(CONFIG.vim_mode)
+        .prompt()?;
     let confirm = |message: &str| {
         Confirm::new(message)
             .with_default(false)
