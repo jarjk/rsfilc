@@ -33,7 +33,7 @@ ascii_table = { version = "4.0", features = [
 inquire = { version = "0.9", default-features = false, features = [
   "console",
 ] }
-yansi = "1.0"
+yansi = { version = "1.0", features = ["detect-env"] }
 
 [patch.crates-io]
 ascii_table = { git = "https://gitlab.com/jark8/ascii-table", branch = "manual-color-code-parse" }
