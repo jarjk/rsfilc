@@ -80,7 +80,7 @@ impl MyDate for NaiveDate {
         if self.year() != Local::now().year() {
             format!("{self}")
         } else if let Some(day_diff) = self.day_diff(&Local::now().date_naive()) {
-            format!("{day_diff}")
+            day_diff.to_string()
         } else {
             format!("{} {:02}", self.hun_month(), self.day())
         }

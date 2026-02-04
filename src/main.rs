@@ -196,9 +196,8 @@ fn guided_renames(user: &User) -> Res<()> {
             let message = format!("sure? '{rename}' is already replaced from '{already_from}'");
             if !confirm(&message)? {
                 continue;
-            } else {
-                rename = already_from.clone(); // don't rename `to` further, rename it's source
             }
+            rename = already_from.clone(); // don't rename `to` further, rename it's source
         }
 
         let message = format!("replace '{rename}' to:");
