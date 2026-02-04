@@ -79,7 +79,7 @@ pub enum Command {
         /// show additional notes/system messages
         #[arg(long, default_value_t = false)]
         notes: bool,
-        /// get message id in interactive mode
+        /// interactively select message to display
         #[arg(short, long, default_value_t = false)]
         interactive: bool,
         /// id of the message to render
