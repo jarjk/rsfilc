@@ -12,9 +12,9 @@ pub static CONFIG: LazyLock<Config> = LazyLock::new(|| Config::load().unwrap());
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Config {
     pub default_userid: String,
+    pub vim_mode: bool,
     pub users: BTreeSet<User>,
     pub rename: BTreeMap<String, String>,
-    pub vim_mode: bool,
 }
 impl Config {
     pub fn load() -> Res<Config> {
