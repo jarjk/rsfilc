@@ -84,6 +84,7 @@ where
     Ok(())
 }
 
+/// set `field` to true if `name` env var exists, and is not set to "0"
 pub fn bool_from_env(name: &str, field: &mut bool) {
     if let Ok(value) = std::env::var(name) {
         if value == "0" {
@@ -92,4 +93,8 @@ pub fn bool_from_env(name: &str, field: &mut bool) {
             *field = true;
         }
     }
+    // TODO less comments?
+    // else don't touch field
+    // if we get here, its likely a `VarError`, the env var wasn't set
+    // in that case, we ignore it, it will be set based on its value in the config file
 }

@@ -19,6 +19,7 @@ impl ChartBuilder {
         }
     }
 
+    /// Create new `ChartBuilder` with custom widht and height
     pub fn new_with_dimensions(width: u32, height: u32) -> Self {
         Self {
             config: ChartConfig::new_with_dimensions(width, height),
@@ -26,6 +27,7 @@ impl ChartBuilder {
         }
     }
 
+    /// Add any plot to the `ChartBuilder` from a vector of (x, y) points
     pub fn add_plot(&mut self, points: Vec<(f32, f32)>) -> &mut Self {
         self.plots.push(points);
         self
@@ -33,21 +35,27 @@ impl ChartBuilder {
 
     /// Calculate and render the chart
     pub fn build_and_display(&mut self) {
+        // scale width, update height
         self.config.width = (self.config.width as f32 * self.config.scale) as u32;
         self.config.height =
             self.config.width * self.config.aspect_ratio.1 / self.config.aspect_ratio.0;
 
         let (xmin, xmax, ymin, ymax) = self.infer_bounds();
 
+        // TODO maybe somehow could be just one container
+        // vec to store horizontal lines (used for borders and other lines)
         let mut horizontal: Vec<f32> = Vec::new();
+        // vec to store vertical lines (used for borders and other lines)
         let mut vertical: Vec<(f32, f32, f32)> = Vec::new();
 
+        // create all borders from lines, based on bounds
         if self.config.borders {
             horizontal.push(ymax);
             horizontal.push(ymin);
             vertical.push((xmin, ymin, ymax));
             vertical.push((xmax, ymin, ymax));
         }
+        // create lines at each whole y value
         if self.config.lines {
             let start = ymin.ceil() as i32;
             let end = ymax.floor() as i32;
@@ -56,6 +64,7 @@ impl ChartBuilder {
             }
         }
 
+        // convert all line-defining vectors of points to `textplots::Shape`s
         let bg_line_buffers: Vec<Vec<(f32, f32)>> = vertical
             .iter()
             .map(|(x, y1, y2)| vec![(*x, *y1), (*x, *y2)])
@@ -76,6 +85,7 @@ impl ChartBuilder {
         let grade_plots: Vec<Shape<'_>> =
             self.plots.iter().map(|line| Shape::Lines(line)).collect();
 
+        // create the main `Chart`
         let mut chart = Chart::new_with_y_range(
             self.config.width,
             self.config.height,
@@ -85,6 +95,7 @@ impl ChartBuilder {
             ymax,
         );
 
+        // add all plots to the chart
         let chart = if self.config.use_color {
             Self::apply_color_shapes(&mut chart, &bg_shapes, RGB8::from(self.config.bg_color))
         } else {
@@ -96,22 +107,27 @@ impl ChartBuilder {
             Self::apply_shapes(chart, &grade_plots)
         };
 
+        // apply all plots in the internal canvas, and print
         chart.figures();
         print!("{chart}");
     }
 
-    /// Infer bounds from points
+    /// Figure out bounds based on the plots we want to draw
     fn infer_bounds(&self) -> (f32, f32, f32, f32) {
+        // always 0
         let xmin = 0f32;
+        // the lenght of the plot with the least points (longer ones will be compressed)
         let xmax = self
             .plots
             .iter()
             .map(|points| points.len())
             .min()
             .unwrap_or(0) as f32;
+        // lower and upper bounds of a grade
         let ymin = 1f32;
         let ymax = 5f32;
 
+        // X axis will be extended with a small, consistent padding if needed
         if self.config.padding {
             let x_span = (xmax - xmin).max(1.0);
             let x_pad = x_span * 0.02; // NOTE magicnumber
@@ -142,6 +158,7 @@ impl ChartBuilder {
     }
 }
 
+/// Helper class to create a feature-rich config for charts
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ChartConfig {
     #[serde(skip)]
@@ -174,12 +191,14 @@ impl ChartConfig {
         new_chartcfg
     }
 
+    /// set config value based on env vars
     fn check_env(&mut self) {
         bool_from_env("RSFILC_CHARTS_BORDER", &mut self.borders);
         bool_from_env("RSFILC_CHARTS_LINES", &mut self.lines);
         bool_from_env("RSFILC_CHARTS_PADDING", &mut self.padding);
     }
 
+    /// set config value based on app config
     fn check_app_config(&mut self) {
         // TODO somehow stop confy from destroying the width and height which it should have skipped
         let safe = (self.width, self.height);
@@ -190,8 +209,10 @@ impl ChartConfig {
 
 impl Default for ChartConfig {
     fn default() -> Self {
+        // chart width based on terminal width
         let width = dimensions().map(|(w, _)| w as u32).unwrap_or(180); // NOTE magicnumber
         let aspect_ratio = (16, 9);
+        // chart height based on chart width and aspect ratio
         let height = width * aspect_ratio.1 / aspect_ratio.0;
 
         Self {
