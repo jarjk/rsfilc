@@ -1,3 +1,4 @@
+use crate::plotting::ChartConfig;
 use crate::{Res, User};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -14,6 +15,7 @@ pub struct Config {
     pub default_userid: String,
     pub users: BTreeSet<User>,
     pub rename: BTreeMap<String, String>,
+    pub charts: ChartConfig,
 }
 impl Config {
     pub fn load() -> Res<Config> {

@@ -83,3 +83,13 @@ where
     }
     Ok(())
 }
+
+pub fn bool_from_env(name: &str, field: &mut bool) {
+    if let Ok(value) = std::env::var(name) {
+        if value == "0" {
+            *field = false;
+        } else {
+            *field = true;
+        }
+    }
+}

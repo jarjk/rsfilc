@@ -39,8 +39,9 @@ pub fn handle(
                 })
                 .collect();
 
-            let mut builder = ChartBuilder::new(points);
-            builder.build_and_display(true, true, true, false);
+            let mut builder = ChartBuilder::new();
+            builder.add_plot(points);
+            builder.build_and_display();
         }
         return Ok(());
     }
