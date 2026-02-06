@@ -49,14 +49,18 @@ pub fn filter_by_kind_or_title(evals: &mut Vec<Evaluation>, filter: &str) {
 }
 
 /// Filter `evals` by `subject`
-pub fn filter_by_subject(evals: &mut Vec<Evaluation>, subj: &str) {
-    log::info!("filtering evals by subject: {subj}");
+pub fn filter_by_subject(evals: &mut Vec<Evaluation>, filter: &str) {
+    log::info!("filtering evals by subject: {filter}");
+    let subjs: Vec<&str> = filter.split(|c| c == '|').collect();
+
     evals.retain(|eval| {
-        eval.tantargy
-            .nev
-            .to_lowercase()
-            .contains(&subj.to_lowercase())
+        let nev = eval.tantargy.nev.to_lowercase();
+        subjs.iter().any(|subj| nev.contains(subj))
     });
+
+    if subjs.len() > 1 {
+        evals.sort_by(|a, b| a.tantargy.nev.cmp(&b.tantargy.nev));
+    }
 }
 
 /// Calculate average of `evals` and `ghosts` evals
