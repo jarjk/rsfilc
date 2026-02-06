@@ -14,8 +14,8 @@ pub static CONFIG: LazyLock<Config> = LazyLock::new(|| Config::load().unwrap());
 pub struct Config {
     pub default_userid: String,
     pub users: BTreeSet<User>,
-    pub rename: BTreeMap<String, String>,
     pub charts: ChartConfig,
+    pub rename: BTreeMap<String, String>,
 }
 impl Config {
     pub fn load() -> Res<Config> {
