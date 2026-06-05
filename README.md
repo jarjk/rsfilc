@@ -136,8 +136,15 @@ if you don't feel like renaming at all at a specific moment, use `NO_RENAME=1` (
 -   [ ] fetching administrational processes
 -   [ ] starting new administrational processes
 
-## Acknowledgements
+## Acknowledgements, alternatives, similar software, docs, ...
 
 -   [dependencies used](./Cargo.toml) (although many of them wouldn't be necessary with a proper API, this is **not** the case with e-kréta.)
--   See [ekreta-rs](https://codeberg.org/jark/ekreta-rs), which provides the API client for E-Kréta
--   Shell completions section got from [zoxide](https://github.com/ajeetdsouza/zoxide)
+-   See [ekreta-rs], which provides the API client for E-Kréta
+-   Docs shell-completions section got from [zoxide](https://github.com/ajeetdsouza/zoxide)
+-   Great docs, used them a lot: <https://nzx.hu/kreta-api/>
+-   Current, extensive docs, *although I didn't ever use them...*: <https://docs.zan1456.dev/>
+-   Rust cli with nice scripts (ical export, ...), *for some reason reimplements most of [ekreta-rs]'s features*: <https://github.com/manen/kreta>
+-   5-th rewrite of the original alternative GUI Filc: <https://folio.zan1456.dev/> & <https://github.com/Zan1456/folio>
+-   Cli based on the GUI: <https://github.com/CsPS0/folio-cli>
+
+[ekreta-rs]: https://codeberg.org/jark/ekreta-rs
