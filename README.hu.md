@@ -127,8 +127,15 @@ ha épp úgy érzed, hogy semmit nem akarsz átnevezni, alkalmazd a `NO_RENAME=1
 -   [ ] ügyintézések indítása
 -   [ ] ...
 
-## Elismerések
+## Elismerések, alternatívák, hasonló appok, dokumentáció, ...
 
 Minden használatba vett `crate`-nek köszönet, [itt](./Cargo.toml) találtatnak.  
-Tessék egy pillantást vetni az [ekreta-rs](https://codeberg.org/jark/ekreta-rs)-re, mely a használt API kliens az E-Krétahoz  
-Autókitöltés leírás innen: [zoxide](https://github.com/ajeetdsouza/zoxide)
+Tessék egy pillantást vetni az [ekreta-rs]-re, mely a használt API kliens az E-Krétahoz  
+Autókitöltés dokumentáció leírás innen: [zoxide](https://github.com/ajeetdsouza/zoxide)  
+Jó kis dokumentáció: <https://nzx.hu/kreta-api/>  
+Rengeteg dolgot tartalmazó dokumentáció, *mondjuk sose használtam...*: <https://docs.zan1456.dev/>  
+Rust konzol-kliens, jó kis funkciókkal (ical export, ...) *valamiért újraírta a tag kb az egész [ekreta-rs]-t...*: <https://github.com/manen/kreta> 
+Kb 5. újraírása az eredeti alternatív GUI naplónak, Filc: <https://folio.zan1456.dev/> & <https://github.com/Zan1456/folio>  
+Konzol, ami az előző appon alapul: <https://github.com/CsPS0/folio-cli>
+
+[ekreta-rs]: https://codeberg.org/jark/ekreta-rs
