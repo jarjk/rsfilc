@@ -129,8 +129,7 @@ pub enum Command {
     #[clap(visible_alias = "s")]
     Schools {
         /// search for school
-        #[arg(short, long, name = "SCHOOL_PROPERTY")]
-        search: Option<String>,
+        search: String,
     },
     /// show the time of next server downtime
     NextDowntime,
