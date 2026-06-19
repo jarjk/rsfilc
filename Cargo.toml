@@ -1,6 +1,6 @@
 [package]
 name = "rsfilc"
-version = "0.13.0"
+version = "0.13.1"
 description = "An E-Kréta console client from scratch."
 keywords = ["kreta", "client", "hungarian"]
 categories = ["command-line-interface"]
@@ -22,7 +22,7 @@ log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 confy = { version = "1.0", default-features = false, features = [
-  "basic_toml_conf"
+  "basic_toml_conf",
 ] }
 nanohtml2text = "0.2"
 ascii_table = { version = "4.0", features = [
@@ -30,10 +30,9 @@ ascii_table = { version = "4.0", features = [
   "color_codes",
   "wide_characters",
 ] }
-inquire = { version = "0.9", default-features = false, features = [
-  "console",
-] }
+inquire = { version = "0.9", default-features = false, features = ["console"] }
 yansi = { version = "1.0", features = ["detect-env"] }
 
 [patch.crates-io]
 ascii_table = { git = "https://gitlab.com/jark8/ascii-table", branch = "manual-color-code-parse" }
+# ekreta = { git = "https://codeberg.org/jark/ekreta-rs" }

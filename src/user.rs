@@ -118,9 +118,11 @@ impl User {
     pub fn login(userid: String, conf: &mut Config) -> Res<Self> {
         info!("creating user ({userid}) from cli");
 
-        let schools = schools::get()?;
+        let _generating_cache = schools::get("e")?;
+        let school_q = inquire::Text::new("your school's name:").prompt()?;
+        let schools = schools::get(&school_q)?;
         let items = schools.iter().map(|s| &s.nev).collect::<Vec<_>>();
-        let school_idx = Select::new("your school's name:", items)
+        let school_idx = Select::new("select the exact match:", items)
             .raw_prompt()?
             .index;
         let schoolid = schools[school_idx].azonosito.clone();
