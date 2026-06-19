@@ -35,4 +35,4 @@ yansi = { version = "1.0", features = ["detect-env"] }
 
 [patch.crates-io]
 ascii_table = { git = "https://gitlab.com/jark8/ascii-table", branch = "manual-color-code-parse" }
-ekreta = { git = "https://codeberg.org/jark/ekreta-rs" }
+# ekreta = { git = "https://codeberg.org/jark/ekreta-rs" }
