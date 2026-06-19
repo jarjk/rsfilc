@@ -600,7 +600,7 @@ dependencies = [
 
 [[package]]
 name = "rsfilc"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "ascii_table",
  "chrono",
