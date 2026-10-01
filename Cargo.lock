@@ -506,9 +506,9 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "nanohtml2text"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11ec1bc47d34ae756616f387c11fd0595f86f2cc7e6473bde9e3ded30cb902a1"
+checksum = "04bf3af3ecff3fa29350cd5c1b356599e96203305ed24b70c7e9574d3880dad5"
 
 [[package]]
 name = "num-traits"
