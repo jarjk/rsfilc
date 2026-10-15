@@ -27,6 +27,13 @@ pub fn handle(
     };
     let mut conf = CONFIG.clone(); // will mutate, don't use plain CONFIG afterwards
     if login {
+        // explicit login means fresh credentials: drop any stale token, so it won't get refreshed
+        if let Ok(kind) = utils::type_to_kind_name::<Token>()
+            && let Some(tp) = paths::cache_path(&name, &kind)
+            && tp.exists()
+        {
+            std::fs::remove_file(tp)?;
+        }
         let res = User::login(name.clone(), &mut conf).inspect_err(|_| {
             eprintln!(
                 "couldn't log in to user account, check your credentials and connection with Kréta"
