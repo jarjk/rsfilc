@@ -38,16 +38,19 @@ impl Config {
         }
     }
     /// checks if the given `name` (either userid or username) is saved in conf and returns the userid
+    ///
+    /// An exact userid wins without touching any other user: the name lookup needs each user's
+    /// info, which can refresh that user's single-use token behind the caller's back.
     pub fn get_userid(&self, name: impl AsRef<str>) -> Option<String> {
+        let name = name.as_ref();
+        if let Some(user) = self.users.iter().find(|user| user.userid == name) {
+            return Some(user.userid.clone());
+        }
         self.users
             .iter()
             .find(|user| {
-                user.userid == name.as_ref()
-                    || user.get_userinfo().is_ok_and(|ui| {
-                        ui.nev
-                            .to_lowercase()
-                            .contains(&name.as_ref().to_lowercase())
-                    })
+                user.get_userinfo()
+                    .is_ok_and(|ui| ui.nev.to_lowercase().contains(&name.to_lowercase()))
             })
             .map(|u| u.userid.clone())
     }
