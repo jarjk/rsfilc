@@ -136,14 +136,16 @@ impl User {
         info!("received schoolid {schoolid} from cli");
 
         let user = Self::new(userid, schoolid, BTreeMap::new());
-        user.get_userinfo()?;
+        // not get_userinfo(): a still-valid userinfo cache would skip the token fetch, and "login" would
+        // succeed without asking for the password or replacing the token
+        let info = user.account.fetch_info(&user.headers()?)?;
+        user.store_cache(&info)?;
 
         user.save(conf);
         Ok(user)
     }
 
     /// save [`User`] credentials
-    /// also set as default
     fn save(&self, conf: &mut Config) {
         conf.users.insert(self.clone());
         conf.switch_user_to(&self.userid);
