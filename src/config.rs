@@ -38,16 +38,20 @@ impl Config {
         }
     }
     /// checks if the given `name` (either userid or username) is saved in conf and returns the userid
+    ///
+    /// An exact userid match has priority over a username, and looking it up doesn't require
+    /// getting user infos, which in turn will in no case trigger a token fetch, as opposed to
+    /// username-based lookup.
     pub fn get_userid(&self, name: impl AsRef<str>) -> Option<String> {
+        let name = name.as_ref();
+        if let Some(user) = self.users.iter().find(|user| user.userid == name) {
+            return Some(user.userid.clone());
+        }
         self.users
             .iter()
             .find(|user| {
-                user.userid == name.as_ref()
-                    || user.get_userinfo().is_ok_and(|ui| {
-                        ui.nev
-                            .to_lowercase()
-                            .contains(&name.as_ref().to_lowercase())
-                    })
+                user.get_userinfo()
+                    .is_ok_and(|ui| ui.nev.to_lowercase().contains(&name.to_lowercase()))
             })
             .map(|u| u.userid.clone())
     }
