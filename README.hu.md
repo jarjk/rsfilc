@@ -127,6 +127,10 @@ ha épp úgy érzed, hogy semmit nem akarsz átnevezni, alkalmazd a `NO_RENAME=1
 -   [ ] ügyintézések indítása
 -   [ ] ...
 
+## Hozzájárulás, besegítés
+
+Kérlek olvasd el a [CONTRIBUTING.md](./CONTRIBUTING.md) dokumentumot, mely sajnos csak angolul van megírva.
+
 ## Elismerések, alternatívák, hasonló appok, dokumentáció, ...
 
 Minden használatba vett `crate`-nek köszönet, [itt](./Cargo.toml) találtatnak.  
