@@ -146,6 +146,7 @@ impl User {
     }
 
     /// save [`User`] credentials
+    /// also set as default
     fn save(&self, conf: &mut Config) {
         conf.users.insert(self.clone());
         conf.switch_user_to(&self.userid);
